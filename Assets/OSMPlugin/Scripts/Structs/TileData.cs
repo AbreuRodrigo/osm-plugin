@@ -10,7 +10,6 @@ namespace OSM
 		public int x;
 		public int y;
 		public string name;
-		public TileNeighbours neighbours;
 
 		public TileData(int zoom, int x, int y) : this()
 		{
@@ -18,7 +17,12 @@ namespace OSM
 			this.x = x;
 			this.y = y;
 			this.name = OSMGeoHelper.GetTileName(this);
-			this.neighbours = OSMGeoHelper.GetTileNeighbourNames(this);
+		}
+
+		public TileData(int index, int zoom, int x, int y, string name) : this(zoom, x, y)
+		{
+			this.index = index;
+			this.name = name;
 		}
 	}
 }

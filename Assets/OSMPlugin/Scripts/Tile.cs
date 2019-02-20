@@ -1,12 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace OSM
 {
 	public class Tile : MonoBehaviour
 	{
-		[SerializeField]
 		private TileData _tileData;
 
 		[SerializeField]
@@ -48,6 +45,12 @@ namespace OSM
 		{
 			get { return _tileData.y; }
 			set { _tileData.y = value; }
+		}
+
+		public string Name
+		{
+			get { return _tileData.name; }
+			set { _tileData.name = value; }
 		}
 
 		public TileData TileData
@@ -142,6 +145,20 @@ namespace OSM
 					_meshRenderer.material.mainTexture = pTexture;
 					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
 					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
+				}
+			}
+			else
+			{
+				if (_renderer != null)
+				{
+					_renderer.sprite = null;
+					gameObject.name = pTexture.name;
+				}
+
+				if (_meshRenderer != null && _meshRenderer.material != null)
+				{
+					_meshRenderer.material.name = gameObject.name = "Tile" + Index;
+					_meshRenderer.material.mainTexture = null;
 				}
 			}
 		}

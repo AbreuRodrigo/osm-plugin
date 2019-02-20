@@ -30,8 +30,12 @@ namespace OSM
 		public static TileData GetTileData(int pZoom, double pLatitude, double pLongitude)
 		{			
 			Point3 tilePoint = WorldToTilePos(pLatitude, pLongitude, pZoom);
-			TileData tileData = new TileData(tilePoint.zoomLevel, tilePoint.x, tilePoint.y);
-			return tileData;
+			return GetTileData(tilePoint.zoomLevel, tilePoint.x, tilePoint.y);
+		}
+
+		public static TileData GetTileData(int pZoom, int pX, int pY)
+		{
+			return new TileData(pZoom, pX, pY);
 		}
 
 		public static string GetTileName(TileData pTileData)

@@ -23,6 +23,9 @@ namespace OSM
 		[SerializeField]
 		private double _currentLongitude = -123.0930032;
 
+		[Header("Dependencies")]
+		public Camera mainCamera;
+
 		[SerializeField]
 		[Range(MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL)]
 		private int _currentZoomLevel = 1;
@@ -43,12 +46,26 @@ namespace OSM
 		private Vector3 _displacementLevel;
 
 		private bool _isScaling;
-		
+
+		public float left;
+		public float top;
+		public float right;
+		public float bottom;
+
+		private void Awake()
+		{
+			Vector3 maxScreenLimit = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
+			top = maxScreenLimit.y;
+			bottom = -top;
+			right = maxScreenLimit.x;
+			left = -right;
+		}
+
 		private void Start()
-		{			
+		{
 			InitializeMap();
 			InitializeLayers();
-			DownloadInitialTiles();
+			ExecuteZooming(0);
 		}
 
 		private void Update()
@@ -90,8 +107,9 @@ namespace OSM
 				layer.Index = layerIndex;
 				layer.Config = layerConfig;
 				layer.SetTileSize(_tileSize);
-				layer.CreateTilesByLayer(_tileTemplate);
+				layer.CreateTilesByLayer(_tileTemplate, _currentZoomLevel);
 				layer.OrganizeTilesAsGrid();
+				layer.DefineTilesNeighbours();
 
 				if (_currentLayer == null)
 				{
@@ -107,7 +125,9 @@ namespace OSM
 				layerIndex++;
 			}
 
-			_currentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
+			DefineCenterTileOnCurrentLayer();
+
+			//StartCoroutine(CentralizeMapInTile());
 		}
 
 		public void ZoomIn()
@@ -139,16 +159,21 @@ namespace OSM
 				_currentZoomLevel = MAX_ZOOM_LEVEL;
 			}
 
-			_currentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
+			DefineCenterTileOnCurrentLayer();
+			DefineAllTilesNameBasedOnTile();
 
 			DownloadInitialTiles();
+
+			CheckCurrentLayerWithFrustum();
+
+			//StartCoroutine(CentralizeMapInTile());
 
 			//DoZoomDisplacement();
 		}
 
 		private void DoZoomDisplacement()
 		{
-			StartCoroutine(Displacement(_currentZoomLevel));
+			//StartCoroutine(Displacement(_currentZoomLevel));
 		}
 
 		private void ScaleTo(GameObject pTarget, Vector3 pEnd, float pDuration)
@@ -156,34 +181,119 @@ namespace OSM
 			StartCoroutine(DoScaleTo(pTarget, pEnd, pDuration));
 		}
 
+		private void DefineCenterTileOnCurrentLayer()
+		{
+			_currentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
+		}
+
+		private void DefineAllTilesNameBasedOnTile()
+		{
+			if (_currentLayer != null)
+			{
+				ApplyTileLogicsForTargetTile(_currentLayer.TargetTile, true, true, true, true, true, true, true, true);
+
+				Tile tile = _currentLayer.Tiles[_currentLayer.TargetTile.NorthWestNeighbour];
+				ApplyTileLogicsForTargetTile(tile, true, true, false, false, false, true, true, true);
+												
+				tile = _currentLayer.Tiles[_currentLayer.TargetTile.SouthWestNeighbour];
+				ApplyTileLogicsForTargetTile(tile, false, false, false, true, true, true, true, false);
+
+				tile = _currentLayer.Tiles[_currentLayer.TargetTile.SouthEastNeighbour];
+				ApplyTileLogicsForTargetTile(tile, false, false, true, true, true, false, false, false);
+
+				tile = _currentLayer.Tiles[_currentLayer.TargetTile.NorthEastNeighbour];
+				ApplyTileLogicsForTargetTile(tile, true, true, true, true, false, false, false, false);
+			}
+		}
+
+		private void ApplyTileLogicsForTargetTile(Tile tile, bool north, bool northEast, bool east, bool southEast, bool south, bool southWest, bool west, bool northWest)
+		{
+			int index = 0;
+			int x = tile.X;
+			int y = tile.Y;
+
+			TileNeighbours neighbours = OSMGeoHelper.GetTileNeighbourNames(tile.TileData);
+
+			if (north)
+			{
+				index = tile.NorthNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x, y - 1, neighbours.northNeighbour);
+			}
+
+			if (south)
+			{
+				index = tile.SouthNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x, y + 1, neighbours.southNeighbour);
+			}
+
+			if (east)
+			{
+				index = tile.EastNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y, neighbours.eastNeighbour);
+			}
+
+			if (west)
+			{
+				index = tile.WestNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y, neighbours.westNeighbour);
+			}
+
+			if (northWest)
+			{
+				index = tile.NorthWestNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y - 1, neighbours.northWestNeighbour);
+			}
+
+			if (northEast)
+			{
+				index = tile.NorthEastNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y - 1, neighbours.northEastNeighbour);
+			}
+
+			if (southWest)
+			{
+				index = tile.SouthWestNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y + 1, neighbours.southWestNeighbour);
+			}
+
+			if (southEast)
+			{
+				index = tile.SouthEastNeighbour;
+				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y + 1, neighbours.southEastNeighbour);
+			}
+		}
+
 		private void DownloadInitialTiles()
 		{
 			if(_currentLayer != null)
 			{
-				//Download the central tile
-				DoTileDownload(_currentLayer.CenterTile.Index, _currentLayer.CenterTile.TileData.name);
-				
-				TileNeighbours neighbours = OSMGeoHelper.GetTileNeighbourNames(_currentLayer.CenterTile.TileData);
-				DoTileDownload(_currentLayer.CenterTile.NorthNeighbour, neighbours.northNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.NorthEastNeighbour, neighbours.northEastNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.EastNeighbour, neighbours.eastNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.SouthEastNeighbour, neighbours.southEastNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.SouthNeighbour, neighbours.southNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.SouthWestNeighbour, neighbours.southWestNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.WestNeighbour, neighbours.westNeighbour);
-				DoTileDownload(_currentLayer.CenterTile.NorthWestNeighbour, neighbours.northWestNeighbour);
+				foreach(Tile tile in _currentLayer.Tiles)
+				{
+					if (tile.isActiveAndEnabled)
+					{
+						DoTileDownload(tile.TileData);
+					}
+				}
 			}
 		}
 
-		private void DoTileDownload(int pTileIndex, string pTileName)
+		private void DoTileDownload(TileData pTileData)
 		{
-			if (string.IsNullOrEmpty(pTileName) == false)
+			if (string.IsNullOrEmpty(pTileData.name) == false)
 			{
-				TileDownloadManager.Instance.DownloadTileImageByTileName(pTileName,
-					(Texture2D texture) => {
-						_currentLayer.SetTexture(pTileIndex, texture);
-					}
-				);
+				if (pTileData.zoom != _currentZoomLevel || pTileData.x < 0 || pTileData.y < 0)
+				{
+					pTileData.name = null;
+					_currentLayer.SetTexture(pTileData.index, null);
+				}
+				else
+				{
+					TileDownloadManager.Instance.DownloadTileImageByTileName(pTileData.name,
+						(Texture2D texture) => {
+							_currentLayer.SetTexture(pTileData.index, texture);
+						}
+					);
+				}
 			}
 		}
 
@@ -191,7 +301,7 @@ namespace OSM
 		{
 			if (_previousZoomLevel != pZoomLevel)
 			{
-				Vector3 init = _currentLayer.CenterTile.transform.position;
+				Vector3 init = _currentLayer.TargetTile.transform.position;
 				Vector3 dest = init + (_previousZoomLevel > pZoomLevel ? _displacementLevel : -_displacementLevel);
 
 				_previousZoomLevel = pZoomLevel;
@@ -204,11 +314,34 @@ namespace OSM
 
 					t += 0.1f;
 
-					_currentLayer.CenterTile.transform.position = Vector3.Lerp(init, dest, t);
+					_currentLayer.TargetTile.transform.position = Vector3.Lerp(init, dest, t);
 				}
 
-				_currentLayer.CenterTile.transform.position = dest;
+				_currentLayer.TargetTile.transform.position = dest;
 			}
+		}
+
+		private IEnumerator CentralizeMapInTile()
+		{
+			Tile target = _currentLayer.TargetTile;
+
+			Vector3 init = transform.position;
+			Vector3 dest = init - target.transform.localPosition;
+
+			float t = 0;
+
+			yield return new WaitForSeconds(1);
+
+			while (t < 1)
+			{
+				yield return new WaitForSeconds(0.01f);
+
+				t += 0.1f;
+
+				transform.position = Vector3.Lerp(init, dest, t);
+			}
+
+			transform.position = dest;
 		}
 
 		private IEnumerator DoScaleTo(GameObject pTarget, Vector3 pEnd, float pDuration)
@@ -229,6 +362,25 @@ namespace OSM
 			_isScaling = false;
 
 			_currentLayer.FadeOut(1, 0, 1);
+		}
+
+		private void CheckCurrentLayerWithFrustum()
+		{
+			if (_currentLayer != null)
+			{
+				foreach (Tile tile in _currentLayer.Tiles)
+				{
+					if(tile.transform.position.x > left && tile.transform.position.x < right &&
+					   tile.transform.position.y > bottom && tile.transform.position.y < top)
+					{
+						tile.gameObject.SetActive(true);
+					}
+					else
+					{
+						tile.gameObject.SetActive(false);
+					}
+				}
+			}
 		}
 
 

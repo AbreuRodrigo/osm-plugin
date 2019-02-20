@@ -12,6 +12,8 @@ namespace OSM
 		private int _gridSqrtSize;
 		private int _totalTiles;
 
+		private Tile[,] _myTiles;
+
 		[SerializeField]
 		private int _index;
 		[SerializeField]
@@ -20,7 +22,11 @@ namespace OSM
 		public LayerConfig Config
 		{
 			get { return _config; }
-			set { _config = value; }
+			set {
+				_config = value;
+				_totalTiles = _config.width * _config.height;
+				_gridSqrtSize = Mathf.RoundToInt(Mathf.Sqrt(_totalTiles));
+			}
 		}
 
 		public int Index
@@ -29,7 +35,12 @@ namespace OSM
 			set { _index = value; }
 		}
 
-		public Tile CenterTile { get; private set; }
+		public List<Tile> Tiles
+		{
+			get { return _tiles; }
+		}
+
+		public Tile TargetTile { get; private set; }
 
 		public void AddTile(Tile pTile)
 		{
@@ -58,10 +69,7 @@ namespace OSM
 		}
 
 		public void OrganizeTilesAsGrid()
-		{
-			_totalTiles = _tiles.Count;
-			_gridSqrtSize = Mathf.RoundToInt(Mathf.Sqrt(_totalTiles));
-
+		{	
 			int halfSqrt = _gridSqrtSize / 2;
 			float halfSize = _tileSize / 2;
 			bool isEven = _totalTiles % 2 == 0;
@@ -93,46 +101,69 @@ namespace OSM
 
 		public void DefineCenterTile(int pZoom, double pLatitude, double pLongitude)
 		{
-			if(_tiles != null)
-			{
-				_centerIndex = _tiles.Count / 2;
-				CenterTile = _tiles[_centerIndex];
-				CenterTile.TileData = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
-				CenterTile.Index = _centerIndex;
-
-				DefineOtherTilesBasedOnCenterTile();
-			}
+			TargetTile = _tiles[_totalTiles / 2];
+			int index = TargetTile.Index;
+			TargetTile.TileData = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
+			TargetTile.Index = index;
 		}
 
-		public void DefineOtherTilesBasedOnCenterTile()
+		private int GetTileIndexByXY(int x, int y)
 		{
-			if (CenterTile != null)
+			if (x < 0 || y < 0 || x >= _config.width || y >= _config.height)
 			{
-				CenterTile.NorthWestNeighbour = _centerIndex - (_gridSqrtSize + 1);
-				CenterTile.WestNeighbour = _centerIndex - _gridSqrtSize;
-				CenterTile.SouthWestNeighbour = _centerIndex - (_gridSqrtSize - 1);
-				CenterTile.NorthNeighbour = _centerIndex - 1;
-				CenterTile.SouthNeighbour = _centerIndex + 1;
-				CenterTile.NorthEastNeighbour = _centerIndex + (_gridSqrtSize - 1);
-				CenterTile.EastNeighbour = _centerIndex + _gridSqrtSize;
-				CenterTile.SouthEastNeighbour = _centerIndex + _gridSqrtSize + 1;
+				return -1;
+			}
+
+			return _myTiles[x, y].Index;
+		}
+
+		private void DefineTileNeighbours(Tile targetTile)
+		{
+			if (targetTile != null)
+			{
+				targetTile.NorthWestNeighbour = GetTileIndexByXY(targetTile.X -1, targetTile.Y -1);
+				targetTile.WestNeighbour = GetTileIndexByXY(targetTile.X -1, targetTile.Y);
+				targetTile.SouthWestNeighbour = GetTileIndexByXY(targetTile.X - 1, targetTile.Y + 1);
+				targetTile.NorthNeighbour = GetTileIndexByXY(targetTile.X, targetTile.Y - 1);
+				targetTile.SouthNeighbour = GetTileIndexByXY(targetTile.X, targetTile.Y + 1);
+				targetTile.NorthEastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y - 1);
+				targetTile.EastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y);
+				targetTile.SouthEastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y + 1);
 			}
 		}
 
-		public void CreateTilesByLayer(Tile pTileTemplate)
+		public void CreateTilesByLayer(Tile pTileTemplate, int pZoomLevel)
 		{
 			int tileIndex = 0;
 
-			for (int t = 0; t < _config.totalTiles; t++)
+			_myTiles = new Tile[_config.width, _config.height];
+
+			for (int x = 0; x < _config.width; x++)
 			{
-				Tile tile = Instantiate(pTileTemplate, transform);
-				tile.gameObject.SetActive(false);
-				tile.Index = tileIndex;
-				tile.SetRenderingLayer(_config.layerOrder);
+				for (int y = 0; y < _config.height; y++)
+				{
+					Tile tile = Instantiate(pTileTemplate, transform);
+					tile.gameObject.SetActive(false);
+					tile.Index = tileIndex;
+					tile.X = x;
+					tile.Y = y;
+					tile.Zoom = pZoomLevel;
+					tile.SetRenderingLayer(_config.layerOrder);
 
-				AddTile(tile);
+					_myTiles[x, y] = tile;
 
-				tileIndex++;
+					AddTile(tile);
+
+					tileIndex++;
+				}
+			}
+		}
+
+		public void DefineTilesNeighbours()
+		{
+			foreach (Tile tile in _tiles)
+			{
+				DefineTileNeighbours(tile);
 			}
 		}
 

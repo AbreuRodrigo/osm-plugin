@@ -76,7 +76,6 @@ namespace OSM
 					if (request.isNetworkError || request.isHttpError)
 					{
 						error.text = request.error;
-						Debug.LogError(request.error);
 						pOnCompleteDownloading?.Invoke(null);
 					}
 					else

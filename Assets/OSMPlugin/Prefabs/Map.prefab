@@ -53,13 +53,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   layerConfigs:
   - type: 1
-    totalTiles: 25
     layerOrder: 3
+    width: 5
+    height: 5
   - type: 0
-    totalTiles: 36
     layerOrder: 2
+    width: 10
+    height: 10
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
+  mainCamera: {fileID: 0}
   _currentZoomLevel: 3
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}

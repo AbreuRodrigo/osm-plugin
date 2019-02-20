@@ -6,7 +6,8 @@ namespace OSM
 	public struct LayerConfig
 	{
 		public ELayerType type;
-		public int totalTiles;
 		public int layerOrder;
+		public int width;
+		public int height;
 	}
 }
