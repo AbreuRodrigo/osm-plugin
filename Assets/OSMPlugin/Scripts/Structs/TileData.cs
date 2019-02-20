@@ -24,5 +24,10 @@ namespace OSM
 			this.index = index;
 			this.name = name;
 		}
+
+		public TileData(int index, int zoom, int x, int y) : this(zoom, x, y)
+		{
+			this.index = index;
+		}
 	}
 }

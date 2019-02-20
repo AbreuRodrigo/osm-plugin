@@ -19,6 +19,8 @@ namespace OSM
 		[SerializeField]
 		private LayerConfig _config;
 
+		public TileData CenterTileData { get; set; }
+
 		public LayerConfig Config
 		{
 			get { return _config; }
@@ -40,7 +42,7 @@ namespace OSM
 			get { return _tiles; }
 		}
 
-		public Tile TargetTile { get; private set; }
+		public Tile CenterTile { get; private set; }
 
 		public void AddTile(Tile pTile)
 		{
@@ -101,10 +103,10 @@ namespace OSM
 
 		public void DefineCenterTile(int pZoom, double pLatitude, double pLongitude)
 		{
-			TargetTile = _tiles[_totalTiles / 2];
-			int index = TargetTile.Index;
-			TargetTile.TileData = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
-			TargetTile.Index = index;
+			CenterTile = _tiles[_totalTiles / 2];
+			int index = CenterTile.Index;
+			CenterTile.TileData = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
+			CenterTile.Index = index;
 		}
 
 		private int GetTileIndexByXY(int x, int y)
@@ -115,21 +117,6 @@ namespace OSM
 			}
 
 			return _myTiles[x, y].Index;
-		}
-
-		private void DefineTileNeighbours(Tile targetTile)
-		{
-			if (targetTile != null)
-			{
-				targetTile.NorthWestNeighbour = GetTileIndexByXY(targetTile.X -1, targetTile.Y -1);
-				targetTile.WestNeighbour = GetTileIndexByXY(targetTile.X -1, targetTile.Y);
-				targetTile.SouthWestNeighbour = GetTileIndexByXY(targetTile.X - 1, targetTile.Y + 1);
-				targetTile.NorthNeighbour = GetTileIndexByXY(targetTile.X, targetTile.Y - 1);
-				targetTile.SouthNeighbour = GetTileIndexByXY(targetTile.X, targetTile.Y + 1);
-				targetTile.NorthEastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y - 1);
-				targetTile.EastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y);
-				targetTile.SouthEastNeighbour = GetTileIndexByXY(targetTile.X + 1, targetTile.Y + 1);
-			}
 		}
 
 		public void CreateTilesByLayer(Tile pTileTemplate, int pZoomLevel)
@@ -156,14 +143,6 @@ namespace OSM
 
 					tileIndex++;
 				}
-			}
-		}
-
-		public void DefineTilesNeighbours()
-		{
-			foreach (Tile tile in _tiles)
-			{
-				DefineTileNeighbours(tile);
 			}
 		}
 

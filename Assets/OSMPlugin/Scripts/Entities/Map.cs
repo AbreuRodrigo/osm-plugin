@@ -45,6 +45,9 @@ namespace OSM
 		private Layer _currentLayer;
 		private Layer _nextLayer;
 
+		[SerializeField]
+		private TileData _centerTileData;
+
 		private Vector3 _displacementLevel;
 
 		private bool _isScaling;
@@ -116,7 +119,7 @@ namespace OSM
 				layer.SetTileSize(_tileSize);
 				layer.CreateTilesByLayer(_tileTemplate, _currentZoomLevel);
 				layer.OrganizeTilesAsGrid();
-				layer.DefineTilesNeighbours();
+				//layer.DefineTilesNeighbours();
 
 				if (_currentLayer == null)
 				{
@@ -167,11 +170,10 @@ namespace OSM
 			}
 
 			DefineCenterTileOnCurrentLayer();
-			DefineAllTilesNameBasedOnTile();
+
+			CheckCurrentLayerWithinScreenLimits();
 
 			DownloadInitialTiles();
-
-			CheckCurrentLayerWithFrustum();
 
 			//StartCoroutine(CentralizeMapInTile());
 
@@ -191,93 +193,24 @@ namespace OSM
 		private void DefineCenterTileOnCurrentLayer()
 		{
 			_currentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
+			_centerTileData = _currentLayer.CenterTile.TileData;
+			DoTileDownload(_centerTileData);
 		}
-
-		private void DefineAllTilesNameBasedOnTile()
-		{
-			if (_currentLayer != null)
-			{
-				ApplyTileLogicsForTargetTile(_currentLayer.TargetTile, true, true, true, true, true, true, true, true);
-
-				Tile tile = _currentLayer.Tiles[_currentLayer.TargetTile.NorthWestNeighbour];
-				ApplyTileLogicsForTargetTile(tile, true, true, false, false, false, true, true, true);
-												
-				tile = _currentLayer.Tiles[_currentLayer.TargetTile.SouthWestNeighbour];
-				ApplyTileLogicsForTargetTile(tile, false, false, false, true, true, true, true, false);
-
-				tile = _currentLayer.Tiles[_currentLayer.TargetTile.SouthEastNeighbour];
-				ApplyTileLogicsForTargetTile(tile, false, false, true, true, true, false, false, false);
-
-				tile = _currentLayer.Tiles[_currentLayer.TargetTile.NorthEastNeighbour];
-				ApplyTileLogicsForTargetTile(tile, true, true, true, true, false, false, false, false);
-			}
-		}
-
-		private void ApplyTileLogicsForTargetTile(Tile tile, bool north, bool northEast, bool east, bool southEast, bool south, bool southWest, bool west, bool northWest)
-		{
-			int index = 0;
-			int x = tile.X;
-			int y = tile.Y;
-
-			TileNeighbours neighbours = OSMGeoHelper.GetTileNeighbourNames(tile.TileData);
-
-			if (north)
-			{
-				index = tile.NorthNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x, y - 1, neighbours.northNeighbour);
-			}
-
-			if (south)
-			{
-				index = tile.SouthNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x, y + 1, neighbours.southNeighbour);
-			}
-
-			if (east)
-			{
-				index = tile.EastNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y, neighbours.eastNeighbour);
-			}
-
-			if (west)
-			{
-				index = tile.WestNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y, neighbours.westNeighbour);
-			}
-
-			if (northWest)
-			{
-				index = tile.NorthWestNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y - 1, neighbours.northWestNeighbour);
-			}
-
-			if (northEast)
-			{
-				index = tile.NorthEastNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y - 1, neighbours.northEastNeighbour);
-			}
-
-			if (southWest)
-			{
-				index = tile.SouthWestNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x - 1, y + 1, neighbours.southWestNeighbour);
-			}
-
-			if (southEast)
-			{
-				index = tile.SouthEastNeighbour;
-				_currentLayer.Tiles[index].TileData = new TileData(index, _currentZoomLevel, x + 1, y + 1, neighbours.southEastNeighbour);
-			}
-		}
-
+				
 		private void DownloadInitialTiles()
 		{
 			if(_currentLayer != null)
 			{
 				foreach(Tile tile in _currentLayer.Tiles)
 				{
-					//if (tile.isActiveAndEnabled)
+					if (tile.TileData.index != _centerTileData.index)
 					{
+						int x = (int) (tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);
+						int y = (int) (tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//Y up is crescent, for the map it's the oposite
+
+						TileData td = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+						tile.TileData = td;
+
 						DoTileDownload(tile.TileData);
 					}
 				}
@@ -308,7 +241,7 @@ namespace OSM
 		{
 			if (_previousZoomLevel != pZoomLevel)
 			{
-				Vector3 init = _currentLayer.TargetTile.transform.position;
+				Vector3 init = _currentLayer.CenterTile.transform.position;
 				Vector3 dest = init + (_previousZoomLevel > pZoomLevel ? _displacementLevel : -_displacementLevel);
 
 				_previousZoomLevel = pZoomLevel;
@@ -321,16 +254,16 @@ namespace OSM
 
 					t += 0.1f;
 
-					_currentLayer.TargetTile.transform.position = Vector3.Lerp(init, dest, t);
+					_currentLayer.CenterTile.transform.position = Vector3.Lerp(init, dest, t);
 				}
 
-				_currentLayer.TargetTile.transform.position = dest;
+				_currentLayer.CenterTile.transform.position = dest;
 			}
 		}
 
 		private IEnumerator CentralizeMapInTile()
 		{
-			Tile target = _currentLayer.TargetTile;
+			Tile target = _currentLayer.CenterTile;
 
 			Vector3 init = transform.position;
 			Vector3 dest = init - target.transform.localPosition;
@@ -371,7 +304,7 @@ namespace OSM
 			_currentLayer.FadeOut(1, 0, 1);
 		}
 
-		public void CheckCurrentLayerWithFrustum()
+		public void CheckCurrentLayerWithinScreenLimits()
 		{
 			if (_currentLayer != null)
 			{				

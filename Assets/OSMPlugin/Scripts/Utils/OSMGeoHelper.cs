@@ -47,21 +47,5 @@ namespace OSM
 		{
 			return string.Format("{0}/{1}/{2}.png", pZoom, pX, pY);
 		}
-
-		public static TileNeighbours GetTileNeighbourNames(TileData pTileData)
-		{
-			TileNeighbours neighbours = new TileNeighbours();
-
-			neighbours.northNeighbour = GetTileName(pTileData.zoom, pTileData.x, pTileData.y - 1);
-			neighbours.northEastNeighbour = GetTileName(pTileData.zoom, pTileData.x + 1, pTileData.y - 1);
-			neighbours.eastNeighbour = GetTileName(pTileData.zoom, pTileData.x + 1, pTileData.y);
-			neighbours.southEastNeighbour = GetTileName(pTileData.zoom, pTileData.x + 1, pTileData.y + 1);
-			neighbours.southNeighbour = GetTileName(pTileData.zoom, pTileData.x, pTileData.y + 1);
-			neighbours.southWestNeighbour = GetTileName(pTileData.zoom, pTileData.x - 1, pTileData.y + 1);
-			neighbours.westNeighbour = GetTileName(pTileData.zoom, pTileData.x - 1, pTileData.y);
-			neighbours.northWestNeighbour = GetTileName(pTileData.zoom, pTileData.x - 1, pTileData.y - 1);
-
-			return neighbours;
-		}
 	}
 }

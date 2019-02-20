@@ -14,15 +14,6 @@ namespace OSM
 		private Material _meshMaterial;
 		private Vector3 _tileSize;
 
-		public int NorthNeighbour;
-		public int NorthEastNeighbour;
-		public int EastNeighbour;
-		public int SouthEastNeighbour;
-		public int SouthNeighbour;
-		public int SouthWestNeighbour;
-		public int WestNeighbour;
-		public int NorthWestNeighbour;
-
 		public int Index
 		{
 			get { return _tileData.index; }

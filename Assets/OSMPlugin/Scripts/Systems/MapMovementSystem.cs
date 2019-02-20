@@ -27,7 +27,7 @@ namespace OSM
 
 			if(_isPressed == true)
 			{
-				_map.CheckCurrentLayerWithFrustum();
+				_map.CheckCurrentLayerWithinScreenLimits();
 				_map.transform.position = _mainCamera.ScreenToWorldPoint(new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z)) - _clickDistance;
 			}
 		}
