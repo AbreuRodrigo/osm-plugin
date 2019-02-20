@@ -10,6 +10,8 @@ namespace OSM
 		private const int MIN_ZOOM_LEVEL = 3;
 		private const int MAX_ZOOM_LEVEL = 19;
 		private const int TILE_SIZE_IN_PIXELS = 256;
+		private const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
+		private const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
 		private const string LAYER_BASE_NAME = "Layer";
 		#endregion
 
@@ -54,11 +56,7 @@ namespace OSM
 
 		private void Awake()
 		{
-			Vector3 maxScreenLimit = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
-			top = maxScreenLimit.y;
-			bottom = -top;
-			right = maxScreenLimit.x;
-			left = -right;
+			CalculateCorners();
 		}
 
 		private void Start()
@@ -81,6 +79,15 @@ namespace OSM
 					ZoomOut();
 				}
 			}
+		}
+
+		public void CalculateCorners()
+		{
+			Vector3 maxScreenLimit = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
+			top = maxScreenLimit.y;
+			bottom = -top;
+			right = maxScreenLimit.x;
+			left = -right;
 		}
 
 		protected void InitializeMap()
@@ -269,7 +276,7 @@ namespace OSM
 			{
 				foreach(Tile tile in _currentLayer.Tiles)
 				{
-					if (tile.isActiveAndEnabled)
+					//if (tile.isActiveAndEnabled)
 					{
 						DoTileDownload(tile.TileData);
 					}
@@ -364,14 +371,14 @@ namespace OSM
 			_currentLayer.FadeOut(1, 0, 1);
 		}
 
-		private void CheckCurrentLayerWithFrustum()
+		public void CheckCurrentLayerWithFrustum()
 		{
 			if (_currentLayer != null)
-			{
+			{				
 				foreach (Tile tile in _currentLayer.Tiles)
 				{
-					if(tile.transform.position.x > left && tile.transform.position.x < right &&
-					   tile.transform.position.y > bottom && tile.transform.position.y < top)
+					if(tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS >= left && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < right &&
+					   tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > bottom && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < top)
 					{
 						tile.gameObject.SetActive(true);
 					}

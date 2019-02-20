@@ -4,8 +4,8 @@ namespace OSM
 {
 	public class Tile : MonoBehaviour
 	{
-		private TileData _tileData;
-
+		[SerializeField]
+		private TileData _tileData;		
 		[SerializeField]
 		private SpriteRenderer _renderer;
 		[SerializeField]
