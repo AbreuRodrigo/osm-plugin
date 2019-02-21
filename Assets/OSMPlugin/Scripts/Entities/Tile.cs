@@ -14,6 +14,8 @@ namespace OSM
 		private Material _meshMaterial;
 		private Vector3 _tileSize;
 
+		public bool print;
+
 		public int Index
 		{
 			get { return _tileData.index; }
@@ -74,6 +76,8 @@ namespace OSM
 				_tileSize = value;
 			}
 		}
+
+		public bool OutOfScreen { get; set; }
 
 		private void Awake()
 		{

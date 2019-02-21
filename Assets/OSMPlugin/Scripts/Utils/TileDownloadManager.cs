@@ -53,7 +53,7 @@ namespace OSM
 			Texture2D texture = null;
 
 			//Getting the texture from the cached textures
-			/*if (_textures != null)
+			if (_textures != null)
 			{
 				_textures.TryGetValue(pTileName, out texture);
 
@@ -62,15 +62,13 @@ namespace OSM
 					texture.name = pTileName;
 					pOnCompleteDownloading?.Invoke(texture);
 				}
-			}*/
+			}
 
 			//Will download the texture
 			if (texture == null)
 			{
 				using (UnityWebRequest request = UnityWebRequestTexture.GetTexture(MAP_TILE_BASE_URI + "/" + pTileName, false))
 				{
-					//request.SetRequestHeader("Accept", "image/*");
-
 					yield return request.SendWebRequest();
 
 					if (request.isNetworkError || request.isHttpError)
@@ -86,7 +84,7 @@ namespace OSM
 						{
 							texture.name = pTileName;
 
-							//_textures[pTileName] = texture;
+							_textures[pTileName] = texture;
 
 							pOnCompleteDownloading?.Invoke(texture);
 						}
