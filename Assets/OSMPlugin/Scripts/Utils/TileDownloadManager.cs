@@ -43,7 +43,7 @@ namespace OSM
 
 		#region Methods
 
-		public void DownloadTileImageByTileName(string pTileName, Action<Texture2D> pOnCompleteDownloading)
+		public void DownloadTileImage(string pTileName, Action<Texture2D> pOnCompleteDownloading)
 		{
 			StartCoroutine(DownloadTileByName(pTileName, pOnCompleteDownloading));
 		}

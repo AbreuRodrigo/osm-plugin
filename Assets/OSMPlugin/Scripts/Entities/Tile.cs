@@ -2,19 +2,22 @@
 
 namespace OSM
 {
-	public class Tile : MonoBehaviour
+	public class Tile : MonoBehaviour, IDownloadable
 	{
 		[SerializeField]
-		private TileData _tileData;		
+		private TileData _tileData;
 		[SerializeField]
-		private SpriteRenderer _renderer;
-		[SerializeField]
-		private MeshRenderer _meshRenderer;
+		public MeshRenderer _meshRenderer;
 
 		private Material _meshMaterial;
 		private Vector3 _tileSize;
 
 		public bool print;
+
+		public bool outLeft;
+		public bool outRight;
+		public bool inLeft;
+		public bool inRight;
 
 		public int Index
 		{
@@ -56,15 +59,11 @@ namespace OSM
 		{
 			get
 			{
-				if(_tileSize != Vector3.zero)
+				if (_tileSize != Vector3.zero)
 				{
 					return _tileSize;
 				}
-				if (_renderer != null)
-				{
-					_tileSize = _renderer.bounds.size;
-				}
-				if(_meshRenderer != null)
+				if (_meshRenderer != null)
 				{
 					_tileSize = _meshRenderer.bounds.size;
 				}
@@ -81,24 +80,23 @@ namespace OSM
 
 		private void Awake()
 		{
-			if (_renderer == null)
-			{
-				_renderer = GetComponent<SpriteRenderer>();
-			}
-
-			if(_renderer == null && _meshRenderer == null)
+			if (_meshRenderer == null)
 			{
 				_meshRenderer = GetComponent<MeshRenderer>();
 				_meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
-			}						
+			}
+		}
+
+		public void ClearTexture()
+		{
+			if (_meshRenderer != null)
+			{
+				_meshRenderer.material.mainTexture = null;
+			}
 		}
 
 		public void SetRenderingLayer(int layer)
 		{
-			if(_renderer != null)
-			{
-				_renderer.sortingOrder = layer;
-			}
 			if (_meshRenderer != null)
 			{
 				_meshRenderer.sortingOrder = layer;
@@ -107,13 +105,6 @@ namespace OSM
 
 		public void SetAlpha(float alpha)
 		{
-			if (_renderer != null)
-			{
-				Color c = _renderer.color;
-				c.a = alpha;
-				_renderer.color = c;
-			}
-
 			if(_meshRenderer != null)
 			{
 				Color c = _meshRenderer.material.color;
@@ -124,38 +115,45 @@ namespace OSM
 
 		public void SetTileTexture(Texture2D pTexture)
 		{
+			SetAlpha(0);
+
 			if (pTexture != null)
 			{
-				if (_renderer != null)
-				{
-					_renderer.sprite = Sprite.Create(pTexture, new Rect(0, 0, pTexture.width, pTexture.height), new Vector2(0.5f, 0.5f));
-					gameObject.name = pTexture.name;
-				}
-
-				if (_meshRenderer != null && _meshRenderer.material != null)
+				if (_meshRenderer != null)
 				{
 					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);
 
 					_meshRenderer.material.name = gameObject.name = pTexture.name;
 					_meshRenderer.material.mainTexture = pTexture;
 					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
-					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
+					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;					
 				}
 			}
 			else
 			{
-				if (_renderer != null)
-				{
-					_renderer.sprite = null;
-					gameObject.name = pTexture.name;
-				}
-
-				if (_meshRenderer != null && _meshRenderer.material != null)
+				if (_meshRenderer != null)
 				{
 					_meshRenderer.material.name = gameObject.name = "Tile" + Index;
 					_meshRenderer.material.mainTexture = null;
 				}
 			}
+
+			FadeIn(1f);
+		}
+
+		private void FadeIn(float pDuration)
+		{
+			TweenManager.Instance.ValueTransition(0, 1, pDuration, TweenType.Linear, true, null, SetAlpha);
+		}
+
+		public void OnEnterScreen()
+		{
+			Debug.Log("Enter Screen");
+		}
+
+		public void OnExitScreen()
+		{
+			Debug.Log("Exit Screen");
 		}
 	}
 }

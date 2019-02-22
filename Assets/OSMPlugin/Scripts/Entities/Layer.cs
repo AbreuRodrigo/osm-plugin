@@ -63,7 +63,15 @@ namespace OSM
 			{
 				_tiles[pIndex].SetTileTexture(pTexture);
 			}
-		}		
+		}
+
+		public void ActivateTile(int pIndex)
+		{
+			if (_tiles != null && _tiles.Count > pIndex)
+			{
+				_tiles[pIndex].gameObject.SetActive(true);
+			}
+		}
 
 		public void SetCenterTexture(Texture2D pTexture)
 		{
@@ -154,29 +162,6 @@ namespace OSM
 			}
 		}
 
-		public void FadeOut(float pInit, float pEnd, float pDuration)
-		{
-			StartCoroutine(FadeOutTiles(pInit, pEnd, pDuration));
-			//InitAlphaUpdate();
-		}
-
-		private IEnumerator FadeOutTiles(float pInit, float pEnd, float pDuration)
-		{
-			float elapsedTime = 0;
-
-			while (elapsedTime <= pDuration)
-			{
-				foreach(Tile tile in _tiles)
-				{
-					tile.SetAlpha(Mathf.Lerp(pInit, pEnd, elapsedTime / pDuration));					
-				}
-
-				elapsedTime += Time.deltaTime;
-
-				yield return null;
-			}
-		}
-
 		bool isChangingAlpha = false;
 		float alphaInit, alphaEnd, alphaDuration, elapsedTime;
 
@@ -189,24 +174,6 @@ namespace OSM
 				alphaEnd = 0;
 				alphaDuration = 5;
 				isChangingAlpha = true;
-			}
-		}
-
-		private void UpdateAlpha()
-		{
-			if (isChangingAlpha == true)
-			{
-				foreach (Tile tile in _tiles)
-				{
-					tile.SetAlpha(Mathf.Lerp(alphaInit, alphaEnd, elapsedTime / alphaDuration));
-				}
-
-				elapsedTime += Time.deltaTime;
-
-				if(elapsedTime > alphaDuration)
-				{
-					isChangingAlpha = false;
-				}
 			}
 		}
 	}

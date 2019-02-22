@@ -28,6 +28,7 @@ namespace OSM
 		public TileData(int index, int zoom, int x, int y) : this(zoom, x, y)
 		{
 			this.index = index;
+			this.name = OSMGeoHelper.GetTileName(zoom, x, y);
 		}
 	}
 }
