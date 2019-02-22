@@ -55,6 +55,14 @@ namespace OSM
 			set { _tileData = value; }
 		}
 
+		public bool TextureUpToDate
+		{
+			get
+			{
+				return _tileData.name.Equals(_meshRenderer.name);
+			}
+		}
+
 		public Vector3 TileSize
 		{
 			get
@@ -125,8 +133,8 @@ namespace OSM
 
 					_meshRenderer.material.name = gameObject.name = pTexture.name;
 					_meshRenderer.material.mainTexture = pTexture;
-					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
-					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;					
+					//_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
+					//_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
 				}
 			}
 			else
@@ -138,7 +146,7 @@ namespace OSM
 				}
 			}
 
-			FadeIn(1f);
+			FadeIn(0.5f);
 		}
 
 		private void FadeIn(float pDuration)

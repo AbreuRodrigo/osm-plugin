@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace OSM
 {
 	public class Map : MonoBehaviour
 	{
-		#region Constants
 		private const int MIN_ZOOM_LEVEL = 3;
 		private const int MAX_ZOOM_LEVEL = 19;
 		private const int TILE_SIZE_IN_PIXELS = 256;
 		private const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
 		private const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
 		private const string LAYER_BASE_NAME = "Layer";
-		#endregion
 
 		[Header("Layer Properties")]
 		[SerializeField]
@@ -47,6 +44,16 @@ namespace OSM
 		private Layer _currentLayer;
 		private Layer _nextLayer;
 
+		private float _tileValidationSeconds = 1;
+		private float _tileValidationCounter = 0;
+
+		//Movement Detection
+		private bool _isMovingLeft;
+		private bool _isMovingRight;
+		private bool _isMovingUp;
+		private bool _isMovingDown;
+		private bool _isStopped;
+
 		[SerializeField]
 		private TileData _centerTileData;
 
@@ -66,6 +73,7 @@ namespace OSM
 
 		private void Start()
 		{
+			StopMovements();
 			InitializeMap();
 			InitializeLayers();
 			InitialZoom();
@@ -86,6 +94,19 @@ namespace OSM
 			}
 		}
 
+		private void LateUpdate()
+		{
+			//DoScaleTo(_currentLayer.gameObject, zoomPercent);
+						
+			if (_tileValidationCounter >= _tileValidationSeconds)
+			{
+				ValidateTiles();
+				_tileValidationCounter = 0;
+			}
+
+			_tileValidationCounter += Time.deltaTime;
+		}
+
 		public void CalculateCorners()
 		{
 			Vector3 maxScreenLimit = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
@@ -93,6 +114,18 @@ namespace OSM
 			bottom = -top;
 			right = maxScreenLimit.x;
 			left = -right;
+		}
+
+		protected void ValidateTiles()
+		{
+			foreach(Tile tile in _currentLayer.Tiles)
+			{
+				if(CheckTileOnScreen(tile.transform.position) && tile.TextureUpToDate == false)
+				{
+					Debug.Log("Trying to update " + tile.Name + " texture with " + tile._meshRenderer.name);
+					DoTileDownload(tile.TileData);
+				}
+			}
 		}
 
 		protected void InitializeMap()
@@ -161,6 +194,43 @@ namespace OSM
 
 			DefineCenterTileOnCurrentLayer();
 			DownloadInitialTiles();
+		}
+
+		public void SetMovingLeft()
+		{
+			_isMovingLeft = true;
+			_isMovingRight = false;
+			_isStopped = false;
+		}
+
+		public void SetMovingRight()
+		{
+			_isMovingRight = true;
+			_isMovingLeft = false;
+			_isStopped = false;
+		}
+
+		public void SetMovingUp()
+		{
+			_isMovingUp = true;
+			_isMovingDown = false;
+			_isStopped = false;
+		}
+
+		public void SetMovingDown()
+		{
+			_isMovingDown = true;
+			_isMovingUp = false;
+			_isStopped = false;
+		}
+
+		public void StopMovements()
+		{
+			_isMovingLeft = false;
+			_isMovingRight = false;
+			_isMovingDown = false;
+			_isMovingUp = false;
+			_isStopped = true;
 		}
 
 		private void ExecuteZooming(int pZoomLevel = 0)
@@ -262,47 +332,45 @@ namespace OSM
 			{
 				foreach (Tile tile in _currentLayer.Tiles)
 				{
-					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < left)
+					if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < left)
 					{
 						tile.transform.localPosition += new Vector3(_currentLayer.Config.width * TILE_SIZE_IN_UNITS, 0, 0);
 						PrepareTileDataDownload(tile);
 					}
-					//if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > right)
-					//{
-					//	tile.transform.localPosition -= new Vector3(_currentLayer.Config.width * TILE_SIZE_IN_UNITS, 0, 0);
-					//PrepareTileDataDownload(tile);
-					//}
-					if (tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > top)
+
+					if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > right)
+					{
+						tile.transform.localPosition -= new Vector3(_currentLayer.Config.width * TILE_SIZE_IN_UNITS, 0, 0);
+						PrepareTileDataDownload(tile);
+					}
+
+					if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > top)
 					{
 						tile.transform.localPosition -= new Vector3(0, _currentLayer.Config.height * TILE_SIZE_IN_UNITS, 0);
 						PrepareTileDataDownload(tile);
 					}
-					//if (tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < bottom)
-					//{
-					//	tile.transform.localPosition += new Vector3(0, _currentLayer.Config.height * TILE_SIZE_IN_UNITS, 0);
-					//PrepareTileDataDownload(tile);
-					//}
+
+					if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < bottom)
+					{
+						tile.transform.localPosition += new Vector3(0, _currentLayer.Config.height * TILE_SIZE_IN_UNITS, 0);
+						PrepareTileDataDownload(tile);
+					}
 				}
 			}
 		}
 
 		private bool CheckTileOnScreen(Vector3 tilePosition)
 		{
-			return tilePosition.x + TILE_HALF_SIZE_IN_UNITS > left &&
-				   tilePosition.x - TILE_HALF_SIZE_IN_UNITS < right &&
-				   tilePosition.y + TILE_HALF_SIZE_IN_UNITS > bottom &&
-				   tilePosition.y - TILE_HALF_SIZE_IN_UNITS < top;
+			return tilePosition.x + TILE_HALF_SIZE_IN_UNITS >= left &&
+				   tilePosition.x - TILE_HALF_SIZE_IN_UNITS <= right &&
+				   tilePosition.y + TILE_HALF_SIZE_IN_UNITS >= bottom &&
+				   tilePosition.y - TILE_HALF_SIZE_IN_UNITS <= top;
 		}
 
 		#region TestOnly
 
 		[Range(0, 1)]
 		public float zoomPercent;
-
-		public void LateUpdate()
-		{
-			DoScaleTo(_currentLayer.gameObject, zoomPercent);
-		}
 
 		private void DoScaleTo(GameObject pTarget, float pPercent)
 		{
