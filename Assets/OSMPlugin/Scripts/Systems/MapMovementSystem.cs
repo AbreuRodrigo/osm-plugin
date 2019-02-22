@@ -11,13 +11,15 @@ namespace OSM
 		private float _threshouldStartInertia = 1f;
 		[SerializeField]
 		private float _inertiaDuration = 1;
+		[SerializeField]
+		private float _inertiaSpeedMultiplier = 0.1f;
+
 		private bool _isOnInertia;
 		private Vector3 _inertiaDirection;
 		private float _totalInertiaTime;
 		private Vector3 _lastPointBeforeReleasing;
 		private Vector3 _releasePoint;
-		private float _durationAccumulator = 0;
-		private float _inertiaSpeedMultiplier = 0.1f;
+		private float _durationAccumulator = 0;		
 
 		[Header("Dependencies")]
 		[SerializeField]

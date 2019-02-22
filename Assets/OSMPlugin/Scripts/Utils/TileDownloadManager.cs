@@ -11,6 +11,13 @@ namespace OSM
 	{
 		private const string MAP_TILE_BASE_URI = "http://a.tile.openstreetmap.org/";
 
+		[SerializeField]
+		private bool _cacheAllTextures;
+
+		[SerializeField]
+		private float _clearUnusedTexturesEachXSeconds = 5;
+		private float _clearTextureTime = 0;
+
 		public Text error;
 
 		#region Properties
@@ -39,6 +46,18 @@ namespace OSM
 			instance = this;
 		}
 
+		private void LateUpdate()
+		{
+
+			if (_clearTextureTime >= _clearUnusedTexturesEachXSeconds)
+			{
+				Resources.UnloadUnusedAssets();
+				_clearTextureTime = 0;
+			}
+
+			_clearTextureTime += Time.deltaTime;
+		}
+
 		#endregion
 
 		#region Methods
@@ -53,7 +72,7 @@ namespace OSM
 			Texture2D texture = null;
 
 			//Getting the texture from the cached textures
-			if (_textures != null)
+			if (_textures != null && _cacheAllTextures)
 			{
 				_textures.TryGetValue(pTileName, out texture);
 
@@ -79,15 +98,14 @@ namespace OSM
 					else
 					{
 						texture = DownloadHandlerTexture.GetContent(request);
+						texture.name = pTileName;
 
-						if (texture != null && _textures != null)
-						{
-							texture.name = pTileName;
-
+						if (_cacheAllTextures && texture != null && _textures != null)
+						{							
 							_textures[pTileName] = texture;
-
-							pOnCompleteDownloading?.Invoke(texture);
 						}
+
+						pOnCompleteDownloading?.Invoke(texture);
 					}
 				}
 			}

@@ -129,12 +129,12 @@ namespace OSM
 			{
 				if (_meshRenderer != null)
 				{
-					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);
+					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);									
 
-					_meshRenderer.material.name = gameObject.name = pTexture.name;
-					_meshRenderer.material.mainTexture = pTexture;
-					//_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
-					//_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
+					_meshRenderer.material.name = gameObject.name = pTexture.name;										
+					_meshRenderer.material.mainTexture = pTexture;										
+					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
+					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
 				}
 			}
 			else
@@ -145,7 +145,7 @@ namespace OSM
 					_meshRenderer.material.mainTexture = null;
 				}
 			}
-
+						
 			FadeIn(0.5f);
 		}
 

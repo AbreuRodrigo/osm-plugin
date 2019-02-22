@@ -39,6 +39,12 @@ namespace OSM
 		[SerializeField]
 		private Layer _layerTemplate;
 
+		[Space(5)]
+		[SerializeField]
+		private bool _debugScreenLimits;
+		[SerializeField]
+		private GameObject _screenLimitsMarker;
+
 		private float _tileSize;
 		private List<Layer> _layers = new List<Layer>();
 		private Layer _currentLayer;
@@ -47,6 +53,8 @@ namespace OSM
 		private float _tileValidationSeconds = 1;
 		private float _tileValidationCounter = 0;
 
+		private ScreenBoundaries _screenBoundaries;
+
 		//Movement Detection
 		private bool _isMovingLeft;
 		private bool _isMovingRight;
@@ -54,21 +62,14 @@ namespace OSM
 		private bool _isMovingDown;
 		private bool _isStopped;
 
-		[SerializeField]
 		private TileData _centerTileData;
-
 		private Vector3 _displacementLevel;
 
 		private bool _isScaling;
-
-		public float left;
-		public float top;
-		public float right;
-		public float bottom;
-
+				
 		private void Awake()
 		{
-			CalculateCorners();
+			CalculateScreenBoundaries();
 		}
 
 		private void Start()
@@ -107,13 +108,24 @@ namespace OSM
 			_tileValidationCounter += Time.deltaTime;
 		}
 
-		public void CalculateCorners()
+		public void CalculateScreenBoundaries()
 		{
-			Vector3 maxScreenLimit = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
-			top = maxScreenLimit.y;
-			bottom = -top;
-			right = maxScreenLimit.x;
-			left = -right;
+			_screenBoundaries = new ScreenBoundaries(mainCamera);
+
+			if(_debugScreenLimits && _screenLimitsMarker != null)
+			{
+				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, 0, 0);
+
+				screenLimitMarker = Instantiate(_screenLimitsMarker);
+				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.top, 0);
+
+				screenLimitMarker = Instantiate(_screenLimitsMarker);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, 0, 0);
+
+				screenLimitMarker = Instantiate(_screenLimitsMarker);
+				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.bottom, 0);
+			}
 		}
 
 		protected void ValidateTiles()
@@ -122,7 +134,6 @@ namespace OSM
 			{
 				if(CheckTileOnScreen(tile.transform.position) && tile.TextureUpToDate == false)
 				{
-					Debug.Log("Trying to update " + tile.Name + " texture with " + tile._meshRenderer.name);
 					DoTileDownload(tile.TileData);
 				}
 			}
@@ -304,7 +315,7 @@ namespace OSM
 			int distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
 			int distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
 
-			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + distX, _centerTileData.y + distY);
+			//tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + distX, _centerTileData.y + distY);
 			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + distX, _centerTileData.y - distY);
 
 			DoTileDownload(tile.TileData);
@@ -332,25 +343,25 @@ namespace OSM
 			{
 				foreach (Tile tile in _currentLayer.Tiles)
 				{
-					if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < left)
+					if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.left)
 					{
 						tile.transform.localPosition += new Vector3(_currentLayer.Config.width * TILE_SIZE_IN_UNITS, 0, 0);
 						PrepareTileDataDownload(tile);
 					}
 
-					if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > right)
+					if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.right)
 					{
 						tile.transform.localPosition -= new Vector3(_currentLayer.Config.width * TILE_SIZE_IN_UNITS, 0, 0);
 						PrepareTileDataDownload(tile);
 					}
 
-					if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > top)
+					if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.top)
 					{
 						tile.transform.localPosition -= new Vector3(0, _currentLayer.Config.height * TILE_SIZE_IN_UNITS, 0);
 						PrepareTileDataDownload(tile);
 					}
 
-					if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < bottom)
+					if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.bottom)
 					{
 						tile.transform.localPosition += new Vector3(0, _currentLayer.Config.height * TILE_SIZE_IN_UNITS, 0);
 						PrepareTileDataDownload(tile);
@@ -361,10 +372,10 @@ namespace OSM
 
 		private bool CheckTileOnScreen(Vector3 tilePosition)
 		{
-			return tilePosition.x + TILE_HALF_SIZE_IN_UNITS >= left &&
-				   tilePosition.x - TILE_HALF_SIZE_IN_UNITS <= right &&
-				   tilePosition.y + TILE_HALF_SIZE_IN_UNITS >= bottom &&
-				   tilePosition.y - TILE_HALF_SIZE_IN_UNITS <= top;
+			return tilePosition.x + TILE_HALF_SIZE_IN_UNITS >= _screenBoundaries.left &&
+				   tilePosition.x - TILE_HALF_SIZE_IN_UNITS <= _screenBoundaries.right &&
+				   tilePosition.y + TILE_HALF_SIZE_IN_UNITS >= _screenBoundaries.bottom &&
+				   tilePosition.y - TILE_HALF_SIZE_IN_UNITS <= _screenBoundaries.top;
 		}
 
 		#region TestOnly
