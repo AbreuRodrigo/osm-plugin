@@ -52,8 +52,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _useInertia: 1
-  _threshouldStartInertia: 3
-  _inertiaDuration: 3
-  _inertiaSpeedMultiplier: 0.5
+  _threshouldStartInertia: 2
+  _inertiaDuration: 10
+  _inertiaSpeedMultiplier: 0.125
   _map: {fileID: 0}
   _mainCamera: {fileID: 0}

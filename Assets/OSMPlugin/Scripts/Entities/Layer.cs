@@ -19,6 +19,8 @@ namespace OSM
 		[SerializeField]
 		private LayerConfig _config;
 
+		public float TileSize { get { return _tileSize; } }
+
 		public TileData CenterTileData { get; set; }
 
 		public LayerConfig Config

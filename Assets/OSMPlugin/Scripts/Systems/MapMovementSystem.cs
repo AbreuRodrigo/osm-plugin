@@ -101,6 +101,13 @@ namespace OSM
 			}
 
 			UpdateMapPositioningSystem();
+
+			if(_map.transform.position.x < -_map._mapMaxXByZoomLevel)
+			{
+				Vector3 p = _map.transform.position;
+				p.x = -_map._mapMaxXByZoomLevel;
+				_map.transform.position = p;
+			}
 		}
 
 		private void UpdateMapPositioningSystem()

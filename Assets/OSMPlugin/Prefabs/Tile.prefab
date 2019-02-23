@@ -23,7 +23,7 @@ GameObject:
   - component: {fileID: 23403893774597400}
   - component: {fileID: 114353460306461164}
   m_Layer: 0
-  m_Name: MeshTile
+  m_Name: Tile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -37,7 +37,7 @@ Transform:
   m_GameObject: {fileID: 1006163100806360}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.56, y: 2.56, z: 1}
+  m_LocalScale: {x: 2.53718, y: 2.53718, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -101,22 +101,4 @@ MonoBehaviour:
     x: 0
     y: 0
     name: 
-    neighbours:
-      northNeighbour: 
-      northEastNeighbour: 
-      eastNeighbour: 
-      southEastNeighbour: 
-      southNeighbour: 
-      southWestNeighbour: 
-      westNeighbour: 
-      northWestNeighbour: 
-  _renderer: {fileID: 0}
   _meshRenderer: {fileID: 23403893774597400}
-  NorthNeighbour: {fileID: 0}
-  NorthEastNeighbour: {fileID: 0}
-  EastNeighbour: {fileID: 0}
-  SouthEastNeighbour: {fileID: 0}
-  SouthNeighbour: {fileID: 0}
-  SouthWestNeighbour: {fileID: 0}
-  WestNeighbour: {fileID: 0}
-  NorthWestNeighbour: {fileID: 0}

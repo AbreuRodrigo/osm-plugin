@@ -12,13 +12,6 @@ namespace OSM
 		private Material _meshMaterial;
 		private Vector3 _tileSize;
 
-		public bool print;
-
-		public bool outLeft;
-		public bool outRight;
-		public bool inLeft;
-		public bool inRight;
-
 		public int Index
 		{
 			get { return _tileData.index; }

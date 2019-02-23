@@ -7,7 +7,7 @@ namespace OSM
 {
 	public class Map : MonoBehaviour
 	{
-		private const int MIN_ZOOM_LEVEL = 3;
+		private const int MIN_ZOOM_LEVEL = 2;
 		private const int MAX_ZOOM_LEVEL = 19;
 		private const int TILE_SIZE_IN_PIXELS = 256;
 		private const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
@@ -23,6 +23,11 @@ namespace OSM
 		private double _currentLatitude = 49.2674573;
 		[SerializeField]
 		private double _currentLongitude = -123.0930032;
+
+		public float _mapMinXByZoomLevel;
+		public float _mapMaxXByZoomLevel;
+		public float _mapMinYByZoomLevel;
+		public float _mapMaxYByZoomLevel;
 
 		[Header("Dependencies")]
 		public Camera mainCamera;
@@ -50,7 +55,7 @@ namespace OSM
 		private Layer _currentLayer;
 		private Layer _nextLayer;
 
-		private float _tileValidationSeconds = 1;
+		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 
 		private ScreenBoundaries _screenBoundaries;
@@ -78,6 +83,14 @@ namespace OSM
 			InitializeMap();
 			InitializeLayers();
 			InitialZoom();
+
+			Vector3 screenSize = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, mainCamera.transform.position.z)) * -1f;
+			float totalScreenWidth = screenSize.x * 2;
+			float f = totalScreenWidth / TILE_SIZE_IN_UNITS;
+			Debug.Log(f);
+
+			_mapMaxXByZoomLevel =  TILE_HALF_SIZE_IN_UNITS + _screenBoundaries.right +  (f * (Mathf.Pow(2, _currentZoomLevel) -1) * 0.5f);
+			_mapMinXByZoomLevel = -_mapMaxXByZoomLevel;
 		}
 
 		private void Update()
@@ -115,16 +128,16 @@ namespace OSM
 			if(_debugScreenLimits && _screenLimitsMarker != null)
 			{
 				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, 0, 0);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, _screenBoundaries.top, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.top, 0);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, _screenBoundaries.bottom, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, 0, 0);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, _screenBoundaries.top, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.bottom, 0);
+				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, _screenBoundaries.bottom, 0);
 			}
 		}
 
@@ -155,7 +168,6 @@ namespace OSM
 		{
 			int layerIndex = 0;
 
-			//Creating the total layers and it's tiles
 			foreach(LayerConfig layerConfig in layerConfigs)
 			{
 				Layer layer = Instantiate(_layerTemplate, transform);
@@ -264,7 +276,9 @@ namespace OSM
 			}
 
 			DefineCenterTileOnCurrentLayer();
+
 			CheckCurrentLayerWithinScreenLimits();
+
 			DownloadInitialTiles();
 		}
 
@@ -298,8 +312,8 @@ namespace OSM
 			{
 				foreach(Tile tile in _currentLayer.Tiles)
 				{
-					int x = (int)(tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);
-					int y = (int)(tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//Y up is crescent, for the map it's the oposite
+					int x = (int)(tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);//tile x position for tile size scale
+					int y = (int)(tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//tile y position for tile size scale
 
 					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 

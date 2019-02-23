@@ -59,7 +59,7 @@ MonoBehaviour:
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
   mainCamera: {fileID: 0}
-  _currentZoomLevel: 15
+  _currentZoomLevel: 3
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}
   _layerTemplate: {fileID: 114939389103965722, guid: e5a8b06161cb24f44a65ad28ad42379d,
