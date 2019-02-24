@@ -7,7 +7,7 @@ namespace OSM
 {
 	public class Map : MonoBehaviour
 	{
-		private const int MIN_ZOOM_LEVEL = 2;
+		private const int MIN_ZOOM_LEVEL = 3;
 		private const int MAX_ZOOM_LEVEL = 19;
 		private const int TILE_SIZE_IN_PIXELS = 256;
 		private const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
@@ -28,7 +28,7 @@ namespace OSM
 		public float _mapMaxXByZoomLevel;
 		public float _mapMinYByZoomLevel;
 		public float _mapMaxYByZoomLevel;
-
+				
 		[Header("Dependencies")]
 		public Camera mainCamera;
 
@@ -58,14 +58,18 @@ namespace OSM
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 
-		private ScreenBoundaries _screenBoundaries;
+		private int _tileCycleLimit;
+
+		public ScreenBoundaries _screenBoundaries;
 
 		//Movement Detection
-		private bool _isMovingLeft;
-		private bool _isMovingRight;
-		private bool _isMovingUp;
-		private bool _isMovingDown;
-		private bool _isStopped;
+		public bool _isMovingLeft;
+		public bool _isMovingRight;
+		public bool _isMovingUp;
+		public bool _isMovingDown;
+		public bool _isStopped;
+
+		public Vector3 ScreenSize { get; private set; }
 
 		private TileData _centerTileData;
 		private Vector3 _displacementLevel;
@@ -84,13 +88,14 @@ namespace OSM
 			InitializeLayers();
 			InitialZoom();
 
-			Vector3 screenSize = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, mainCamera.transform.position.z)) * -1f;
-			float totalScreenWidth = screenSize.x * 2;
-			float f = totalScreenWidth / TILE_SIZE_IN_UNITS;
-			Debug.Log(f);
+			float aspect = Screen.height / Screen.width;
 
-			_mapMaxXByZoomLevel =  TILE_HALF_SIZE_IN_UNITS + _screenBoundaries.right +  (f * (Mathf.Pow(2, _currentZoomLevel) -1) * 0.5f);
-			_mapMinXByZoomLevel = -_mapMaxXByZoomLevel;
+			ScreenSize = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, mainCamera.transform.position.z)) * -1;
+
+			CalculateTileCycleLimit();
+
+			//_mapMaxXByZoomLevel = -TILE_HALF_SIZE_IN_UNITS + (Mathf.Pow(2, _currentZoomLevel) - 1) * TILE_SIZE_IN_UNITS;
+			//_mapMinXByZoomLevel = _centerTileData.x * TILE_SIZE_IN_UNITS;
 		}
 
 		private void Update()
@@ -119,6 +124,11 @@ namespace OSM
 			}
 
 			_tileValidationCounter += Time.deltaTime;
+		}
+
+		private void CalculateTileCycleLimit()
+		{
+			_tileCycleLimit = (int) Mathf.Pow(2, _currentZoomLevel) - 1;
 		}
 
 		public void CalculateScreenBoundaries()
@@ -329,9 +339,24 @@ namespace OSM
 			int distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
 			int distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
 
-			//tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + distX, _centerTileData.y + distY);
-			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + distX, _centerTileData.y - distY);
+			int nextX = _centerTileData.x + distX;
+			int nextY = _centerTileData.y - distY;
 
+			if(nextX > _tileCycleLimit)
+			{
+				int correctionX = nextX / (_tileCycleLimit + 1);
+				nextX = nextX - (_tileCycleLimit + 1) * correctionX;
+			}
+			else if(nextX < 0)
+			{
+				nextX = (nextX * -1) - 1;//Inversion
+				int correctionX = nextX / (_tileCycleLimit + 1);//Correction
+				nextX = nextX - (_tileCycleLimit + 1) * correctionX;//Formula
+				nextX = _tileCycleLimit - nextX;
+			}
+			
+			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, nextX, nextY);
+			
 			DoTileDownload(tile.TileData);
 		}
 

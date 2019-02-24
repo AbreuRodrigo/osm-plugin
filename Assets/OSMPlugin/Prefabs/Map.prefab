@@ -58,13 +58,17 @@ MonoBehaviour:
     height: 7
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
+  _mapMinXByZoomLevel: 0
+  _mapMaxXByZoomLevel: 0
+  _mapMinYByZoomLevel: 0
+  _mapMaxYByZoomLevel: 0
   mainCamera: {fileID: 0}
   _currentZoomLevel: 3
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}
   _layerTemplate: {fileID: 114939389103965722, guid: e5a8b06161cb24f44a65ad28ad42379d,
     type: 2}
-  _debugScreenLimits: 0
+  _debugScreenLimits: 1
   _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
     type: 2}
   zoomPercent: 0

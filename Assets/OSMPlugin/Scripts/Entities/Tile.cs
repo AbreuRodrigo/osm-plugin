@@ -76,9 +76,7 @@ namespace OSM
 				_tileSize = value;
 			}
 		}
-
-		public bool OutOfScreen { get; set; }
-
+				
 		private void Awake()
 		{
 			if (_meshRenderer == null)

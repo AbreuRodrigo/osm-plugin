@@ -32,6 +32,7 @@ namespace OSM
 		private Vector3 _pointerClickTouch;
 
 		private Vector3 _previousMapPosition = Vector3.zero;
+		private Vector3 _mapLimitVector;
 
 		private void LateUpdate()
 		{
@@ -102,12 +103,21 @@ namespace OSM
 
 			UpdateMapPositioningSystem();
 
-			if(_map.transform.position.x < -_map._mapMaxXByZoomLevel)
+			/*if (_map.transform.position.x + _map._mapMaxXByZoomLevel < _map._screenBoundaries.right)
 			{
-				Vector3 p = _map.transform.position;
-				p.x = -_map._mapMaxXByZoomLevel;
-				_map.transform.position = p;
-			}
+				_mapLimitVector.x = -_map._mapMaxXByZoomLevel + _map.ScreenSize.x;
+				_mapLimitVector.y = _map.transform.position.y;
+				_mapLimitVector.z = _map.transform.position.z;
+				_map.transform.position = _mapLimitVector;
+			}*/
+
+			/*if (_map.transform.position.x + _map._mapMinXByZoomLevel > _map._screenBoundaries.left)
+			{
+				_mapLimitVector.x = -_map._mapMinXByZoomLevel + _map.ScreenSize.x;
+				_mapLimitVector.y = _map.transform.position.y;
+				_mapLimitVector.z = _map.transform.position.z;
+				_map.transform.position = _mapLimitVector;
+			}*/
 		}
 
 		private void UpdateMapPositioningSystem()

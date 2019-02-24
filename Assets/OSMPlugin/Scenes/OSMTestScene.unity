@@ -909,8 +909,8 @@ Prefab:
       objectReference: {fileID: 346407358}
     - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
         type: 2}
-      propertyPath: _debugScreenLimits
-      value: 1
+      propertyPath: _currentZoomLevel
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}
