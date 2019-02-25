@@ -103,21 +103,7 @@ namespace OSM
 
 			UpdateMapPositioningSystem();
 
-			/*if (_map.transform.position.x + _map._mapMaxXByZoomLevel < _map._screenBoundaries.right)
-			{
-				_mapLimitVector.x = -_map._mapMaxXByZoomLevel + _map.ScreenSize.x;
-				_mapLimitVector.y = _map.transform.position.y;
-				_mapLimitVector.z = _map.transform.position.z;
-				_map.transform.position = _mapLimitVector;
-			}*/
-
-			/*if (_map.transform.position.x + _map._mapMinXByZoomLevel > _map._screenBoundaries.left)
-			{
-				_mapLimitVector.x = -_map._mapMinXByZoomLevel + _map.ScreenSize.x;
-				_mapLimitVector.y = _map.transform.position.y;
-				_mapLimitVector.z = _map.transform.position.z;
-				_map.transform.position = _mapLimitVector;
-			}*/
+			UpdateMapPositionLimits();
 		}
 
 		private void UpdateMapPositioningSystem()
@@ -154,6 +140,22 @@ namespace OSM
 			}
 
 			_previousMapPosition = _map.transform.position;
+		}
+
+		private void UpdateMapPositionLimits()
+		{
+			if (_map.transform.position.y + _map._mapMinYByZoomLevel < _map._screenBoundaries.top)
+			{
+				_mapLimitVector = _map.transform.position;
+				_mapLimitVector.y = _map._screenBoundaries.top - _map._mapMinYByZoomLevel;
+				_map.transform.position = _mapLimitVector;
+			}
+			if(_map.transform.position.y - _map._mapMaxYByZoomLevel > _map._screenBoundaries.bottom)
+			{
+				_mapLimitVector = _map.transform.position;
+				_mapLimitVector.y = _map._screenBoundaries.bottom + _map._mapMaxYByZoomLevel;
+				_map.transform.position = _mapLimitVector;
+			}
 		}
 	}
 }

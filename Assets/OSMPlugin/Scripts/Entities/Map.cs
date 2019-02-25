@@ -24,8 +24,6 @@ namespace OSM
 		[SerializeField]
 		private double _currentLongitude = -123.0930032;
 
-		public float _mapMinXByZoomLevel;
-		public float _mapMaxXByZoomLevel;
 		public float _mapMinYByZoomLevel;
 		public float _mapMaxYByZoomLevel;
 				
@@ -50,7 +48,6 @@ namespace OSM
 		[SerializeField]
 		private GameObject _screenLimitsMarker;
 
-		private float _tileSize;
 		private List<Layer> _layers = new List<Layer>();
 		private Layer _currentLayer;
 		private Layer _nextLayer;
@@ -70,6 +67,7 @@ namespace OSM
 		public bool _isStopped;
 
 		public Vector3 ScreenSize { get; private set; }
+		public float TileSize { get; private set; }
 
 		private TileData _centerTileData;
 		private Vector3 _displacementLevel;
@@ -93,6 +91,9 @@ namespace OSM
 			ScreenSize = mainCamera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, mainCamera.transform.position.z)) * -1;
 
 			CalculateTileCycleLimit();
+
+			_mapMinYByZoomLevel = _centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
+			_mapMaxYByZoomLevel = (_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 
 			//_mapMaxXByZoomLevel = -TILE_HALF_SIZE_IN_UNITS + (Mathf.Pow(2, _currentZoomLevel) - 1) * TILE_SIZE_IN_UNITS;
 			//_mapMinXByZoomLevel = _centerTileData.x * TILE_SIZE_IN_UNITS;
@@ -164,14 +165,14 @@ namespace OSM
 
 		protected void InitializeMap()
 		{
-			_tileSize = _tileTemplate.TileSize.x;
+			TileSize = _tileTemplate.TileSize.x;
 
-			if(_tileSize == 0)
+			if(TileSize == 0)
 			{
-				_tileSize = TILE_SIZE_IN_PIXELS;
+				TileSize = TILE_SIZE_IN_PIXELS;
 			}
 
-			_displacementLevel = new Vector3(_tileSize * 0.5f, _tileSize * 0.5f, 0);
+			_displacementLevel = new Vector3(TileSize * 0.5f, TileSize * 0.5f, 0);
 		}
 
 		protected void InitializeLayers()
@@ -184,7 +185,7 @@ namespace OSM
 				layer.gameObject.name = LAYER_BASE_NAME + ( layerIndex + 1 );
 				layer.Index = layerIndex;
 				layer.Config = layerConfig;
-				layer.SetTileSize(_tileSize);
+				layer.SetTileSize(TileSize);
 				layer.CreateTilesByLayer(_tileTemplate, _currentZoomLevel);
 				layer.OrganizeTilesAsGrid();
 
