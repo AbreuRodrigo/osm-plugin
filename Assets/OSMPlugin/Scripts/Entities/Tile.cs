@@ -112,20 +112,32 @@ namespace OSM
 			}
 		}
 
-		public void SetTileTexture(Texture2D pTexture)
+		public void FadeOut(float pDuration)
 		{
-			SetAlpha(0);
+			TweenManager.Instance.ValueTransition(1, 0, pDuration, TweenType.Linear, true, null, SetAlpha);
+		}
 
+		public void FadeIn(float pDuration)
+		{
+			TweenManager.Instance.ValueTransition(0, 1, pDuration, TweenType.Linear, true, null, SetAlpha);
+		}
+
+		public void SetTileTexture(Texture2D pTexture)
+		{			
 			if (pTexture != null)
 			{
 				if (_meshRenderer != null)
 				{
+					SetAlpha(0);
+
 					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);									
 
-					_meshRenderer.material.name = gameObject.name = pTexture.name;										
+					_meshRenderer.material.name = gameObject.name = pTexture.name;
 					_meshRenderer.material.mainTexture = pTexture;										
 					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
 					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
+
+					FadeIn(0.5f);
 				}
 			}
 			else
@@ -135,14 +147,7 @@ namespace OSM
 					_meshRenderer.material.name = gameObject.name = "Tile" + Index;
 					_meshRenderer.material.mainTexture = null;
 				}
-			}
-						
-			FadeIn(0.5f);
-		}
-
-		private void FadeIn(float pDuration)
-		{
-			TweenManager.Instance.ValueTransition(0, 1, pDuration, TweenType.Linear, true, null, SetAlpha);
+			}					
 		}
 
 		public void OnEnterScreen()

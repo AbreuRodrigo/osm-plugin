@@ -42,10 +42,7 @@ namespace OSM
 				_clickDistance = _mainCamera.ScreenToWorldPoint(
 					new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z)) - _map.transform.position;
 
-				if (_useInertia == true)
-				{
-					_isOnInertia = false;
-				}
+				StopInertia();
 			}
 			else if (_isPressed == true && Input.GetMouseButtonUp(0))
 			{
@@ -54,22 +51,7 @@ namespace OSM
 				_releasePoint = _mainCamera.ScreenToWorldPoint(
 					new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z));
 
-				if (_useInertia)
-				{					
-					_totalInertiaTime = Time.time - _totalInertiaTime;
-
-					if(_totalInertiaTime <= _threshouldStartInertia)
-					{
-						_isOnInertia = true;
-						_inertiaDirection = _releasePoint - _lastPointBeforeReleasing;
-					}
-					else
-					{
-						_inertiaDirection = Vector3.zero;
-					}
-
-					_durationAccumulator = 0;
-				}
+				StartInertia();
 			}
 
 			if (_isPressed == true)
@@ -81,28 +63,11 @@ namespace OSM
 
 				_map.transform.position = _lastPointBeforeReleasing - _clickDistance;
 
-				if (_useInertia == true)
-				{
-					_totalInertiaTime = Time.time;
-				}
+				ResetInertiaTime();
 			}
 
-			if(_useInertia == true && _isOnInertia == true && _isPressed == false)
-			{
-				_map.transform.position += Vector3.Lerp(_inertiaDirection * _inertiaSpeedMultiplier, Vector3.zero, _durationAccumulator);
-				_durationAccumulator += Time.smoothDeltaTime;
-
-				if(_durationAccumulator >= _inertiaDuration)
-				{
-					_durationAccumulator = 0;
-					_isOnInertia = false;
-				}
-
-				_map.CheckCurrentLayerWithinScreenLimits();
-			}
-
+			UpdateInertiaOverMap();
 			UpdateMapPositioningSystem();
-
 			UpdateMapPositionLimits();
 		}
 
@@ -132,7 +97,7 @@ namespace OSM
 					{
 						_map.SetMovingUp();
 					}
-					else if(_map.transform.position.y < _previousMapPosition.y)
+					else if (_map.transform.position.y < _previousMapPosition.y)
 					{
 						_map.SetMovingDown();
 					}
@@ -150,12 +115,69 @@ namespace OSM
 				_mapLimitVector.y = _map._screenBoundaries.top - _map._mapMinYByZoomLevel;
 				_map.transform.position = _mapLimitVector;
 			}
-			if(_map.transform.position.y - _map._mapMaxYByZoomLevel > _map._screenBoundaries.bottom)
+			if (_map.transform.position.y - _map._mapMaxYByZoomLevel > _map._screenBoundaries.bottom)
 			{
 				_mapLimitVector = _map.transform.position;
 				_mapLimitVector.y = _map._screenBoundaries.bottom + _map._mapMaxYByZoomLevel;
 				_map.transform.position = _mapLimitVector;
 			}
 		}
+
+
+		#region Inertia
+		private void ResetInertiaTime()
+		{
+			if (_useInertia == true)
+			{
+				_totalInertiaTime = Time.time;
+			}
+		}
+
+		private void UpdateInertiaOverMap()
+		{
+			if (_useInertia == true && _isOnInertia == true && _isPressed == false)
+			{
+				_map.transform.position += Vector3.Lerp(_inertiaDirection * _inertiaSpeedMultiplier, Vector3.zero, _durationAccumulator);
+				_durationAccumulator += Time.smoothDeltaTime;
+
+				if (_durationAccumulator >= _inertiaDuration)
+				{
+					_durationAccumulator = 0;
+					_isOnInertia = false;
+				}
+
+				_map.CheckCurrentLayerWithinScreenLimits();
+			}
+		}
+
+		private void StartInertia()
+		{
+			if (_useInertia)
+			{
+				_totalInertiaTime = Time.time - _totalInertiaTime;
+
+				if (_totalInertiaTime <= _threshouldStartInertia)
+				{
+					_isOnInertia = true;
+					_inertiaDirection = _releasePoint - _lastPointBeforeReleasing;
+				}
+				else
+				{
+					_inertiaDirection = Vector3.zero;
+				}
+
+				_durationAccumulator = 0;
+			}
+		}
+
+		private void StopInertia()
+		{
+			if (_useInertia == true)
+			{
+				_isOnInertia = false;
+			}
+		}
+
+		#endregion
 	}
 }

@@ -17,10 +17,12 @@ namespace OSM
 		[SerializeField]
 		private int _index;
 		[SerializeField]
+		private int _renderingOrder;
+
 		private LayerConfig _config;
 
 		public float TileSize { get { return _tileSize; } }
-
+		public int RenderingOrder { get { return _renderingOrder; } }
 		public TileData CenterTileData { get; set; }
 
 		public LayerConfig Config
@@ -134,6 +136,7 @@ namespace OSM
 			int tileIndex = 0;
 
 			_myTiles = new Tile[_config.width, _config.height];
+			_renderingOrder = _config.layerOrder;
 
 			for (int x = 0; x < _config.width; x++)
 			{
@@ -145,7 +148,7 @@ namespace OSM
 					tile.X = x;
 					tile.Y = y;
 					tile.Zoom = pZoomLevel;
-					tile.SetRenderingLayer(_config.layerOrder);
+					tile.SetRenderingLayer(_renderingOrder);
 
 					_myTiles[x, y] = tile;
 
@@ -156,11 +159,46 @@ namespace OSM
 			}
 		}
 
+		public void ChangeRenderingLayer(int pNewLayerOrder)
+		{
+			foreach(Tile tile in _tiles)
+			{
+				if(tile != null)
+				{
+					tile.SetRenderingLayer(pNewLayerOrder);
+				}
+			}
+		}
+
 		public void ManualFadeOut(float pInit, float pEnd, float pPercent)
 		{
 			foreach (Tile tile in _tiles)
 			{
 				tile.SetAlpha(Mathf.Lerp(pInit, pEnd, pPercent));
+			}
+		}
+
+		public void FadeOut(float pDuration)
+		{
+			foreach (Tile tile in _tiles)
+			{
+				tile.FadeOut(pDuration);
+			}
+		}
+
+		public void FadeIn(float pDuration)
+		{
+			foreach (Tile tile in _tiles)
+			{
+				tile.FadeIn(pDuration);
+			}
+		}
+
+		public void ClearTileTextures()
+		{
+			foreach (Tile tile in _tiles)
+			{
+				tile.ClearTexture();
 			}
 		}
 
