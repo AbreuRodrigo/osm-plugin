@@ -52,4 +52,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _map: {fileID: 0}
-  _zoomSpeed: 0.25
+  _zoomSpeed: 0.5
+  _isZooming: 0

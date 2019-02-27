@@ -21,8 +21,8 @@ namespace OSM
 			Coordinates coords;
 			double n = Math.PI - ((2.0 * Math.PI * pTileY) / Math.Pow(2.0, pZoom));
 
-			coords.latitude = (float)((pTileX / Math.Pow(2.0, pZoom) * 360.0) - 180.0);
-			coords.longitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
+			coords.longitude = (float)((pTileX / Math.Pow(2.0, pZoom) * 360.0) - 180.0);
+			coords.latitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
 
 			return coords;
 		}

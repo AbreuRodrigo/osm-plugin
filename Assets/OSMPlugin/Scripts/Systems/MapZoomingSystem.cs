@@ -19,6 +19,8 @@ namespace OSM
 			{
 				_isZooming = true;
 
+				_map.UpdateTargetCoordinateBasedInTile();
+
 				if (Input.mouseScrollDelta.y == 1)
 				{
 					_map.PrepareZoomIn(_zoomSpeed, FinishZooming);

@@ -8,15 +8,12 @@ namespace OSM
 		[SerializeField]
 		private bool _useInertia;
 		[SerializeField]
-		private float _threshouldStartInertia = 1f;
-		[SerializeField]
 		private float _inertiaDuration = 1;
 		[SerializeField]
 		private float _inertiaSpeedMultiplier = 0.1f;
 
 		private bool _isOnInertia;
 		private Vector3 _inertiaDirection;
-		private float _totalInertiaTime;
 		private Vector3 _lastPointBeforeReleasing;
 		private Vector3 _releasePoint;
 		private float _durationAccumulator = 0;		
@@ -33,23 +30,30 @@ namespace OSM
 
 		private Vector3 _previousMapPosition = Vector3.zero;
 		private Vector3 _mapLimitVector;
+		private Vector3 _helperVector;
 
 		private void LateUpdate()
 		{
 			if (_isPressed == false && Input.GetMouseButtonDown(0))
 			{
-				_isPressed = true;
-				_clickDistance = _mainCamera.ScreenToWorldPoint(
-					new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z)) - _map.transform.position;
-
 				StopInertia();
+
+				_isPressed = true;
+				_helperVector.x = -Input.mousePosition.x;
+				_helperVector.y = -Input.mousePosition.y;
+				_helperVector.z = _mainCamera.transform.position.z;
+
+				_clickDistance = _mainCamera.ScreenToWorldPoint(_helperVector) - _map.transform.position;								
 			}
-			else if (_isPressed == true && Input.GetMouseButtonUp(0))
+			
+			if (_isPressed == true && Input.GetMouseButtonUp(0))
 			{
 				_isPressed = false;
 
-				_releasePoint = _mainCamera.ScreenToWorldPoint(
-					new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z));
+				_helperVector.x = -Input.mousePosition.x;
+				_helperVector.y = -Input.mousePosition.y;
+				_helperVector.z = _mainCamera.transform.position.z;
+				_releasePoint = _mainCamera.ScreenToWorldPoint(_helperVector);
 
 				StartInertia();
 			}
@@ -58,12 +62,11 @@ namespace OSM
 			{
 				_map.CheckCurrentLayerWithinScreenLimits();
 
-				_lastPointBeforeReleasing = _mainCamera.ScreenToWorldPoint(
-					new Vector3(-Input.mousePosition.x, -Input.mousePosition.y, _mainCamera.transform.position.z));
-
+				_helperVector.x = -Input.mousePosition.x;
+				_helperVector.y = -Input.mousePosition.y;
+				_helperVector.z = _mainCamera.transform.position.z;
+				_lastPointBeforeReleasing = _mainCamera.ScreenToWorldPoint(_helperVector);
 				_map.transform.position = _lastPointBeforeReleasing - _clickDistance;
-
-				ResetInertiaTime();
 			}
 
 			UpdateInertiaOverMap();
@@ -125,14 +128,6 @@ namespace OSM
 
 
 		#region Inertia
-		private void ResetInertiaTime()
-		{
-			if (_useInertia == true)
-			{
-				_totalInertiaTime = Time.time;
-			}
-		}
-
 		private void UpdateInertiaOverMap()
 		{
 			if (_useInertia == true && _isOnInertia == true && _isPressed == false)
@@ -154,17 +149,8 @@ namespace OSM
 		{
 			if (_useInertia)
 			{
-				_totalInertiaTime = Time.time - _totalInertiaTime;
-
-				if (_totalInertiaTime <= _threshouldStartInertia)
-				{
-					_isOnInertia = true;
-					_inertiaDirection = _releasePoint - _lastPointBeforeReleasing;
-				}
-				else
-				{
-					_inertiaDirection = Vector3.zero;
-				}
+				_isOnInertia = true;
+				_inertiaDirection = _releasePoint - _lastPointBeforeReleasing;
 
 				_durationAccumulator = 0;
 			}

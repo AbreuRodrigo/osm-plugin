@@ -65,13 +65,10 @@ MonoBehaviour:
   _mapMinYByZoomLevel: 0
   _mapMaxYByZoomLevel: 0
   mainCamera: {fileID: 0}
-  _currentZoomLevel: 3
+  _currentZoomLevel: 5
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}
   _layerTemplate: {fileID: 114939389103965722, guid: e5a8b06161cb24f44a65ad28ad42379d,
-    type: 2}
-  _debugScreenLimits: 0
-  _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
     type: 2}
   _screenBoundaries:
     left: 0
@@ -83,4 +80,7 @@ MonoBehaviour:
   _isMovingUp: 0
   _isMovingDown: 0
   _isStopped: 0
-  zoomPercent: 0
+  _debugScreenLimits: 1
+  _showDebugTargetTile: 1
+  _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
+    type: 2}

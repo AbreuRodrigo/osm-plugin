@@ -51,6 +51,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d5b78525d91a6744b8ed09b57870232, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cacheAllTextures: 0
-  _clearUnusedTexturesEachXSeconds: 5
-  error: {fileID: 0}
+  _cacheAllTexturesAfterDownloading: 0
+  _clearUnusedTexturesEachXSeconds: 2
