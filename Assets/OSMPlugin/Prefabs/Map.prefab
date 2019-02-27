@@ -80,7 +80,7 @@ MonoBehaviour:
   _isMovingUp: 0
   _isMovingDown: 0
   _isStopped: 0
-  _debugScreenLimits: 1
-  _showDebugTargetTile: 1
+  _debugScreenLimits: 0
+  _showDebugTargetTile: 0
   _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
     type: 2}

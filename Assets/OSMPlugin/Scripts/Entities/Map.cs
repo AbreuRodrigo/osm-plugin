@@ -266,12 +266,31 @@ namespace OSM
 
 		public void ZoomIn()
 		{
+			UpdateTargetCoordinateBasedInTile();
+
 			ExecuteZooming(1);
+
+			ForcePrepareTilesForDownload();
 		}
 
 		public void ZoomOut()
 		{
+			UpdateTargetCoordinateBasedInTile();
+
 			ExecuteZooming(-1);
+
+			ForcePrepareTilesForDownload();
+		}
+
+		private void ForcePrepareTilesForDownload()
+		{
+			foreach(Tile tile in CurrentLayer.Tiles)
+			{
+				if(CheckTileOnScreen(tile.transform.position))
+				{
+					PrepareTileDataDownload(tile);
+				}
+			}						
 		}
 
 		public void PrepareZoomIn(float pZoomDuration, Action pOnComplete)
@@ -279,8 +298,6 @@ namespace OSM
 			if (_currentZoomLevel < MAX_ZOOM_LEVEL)
 			{
 				NextZoomLevel++;
-
-				//TweenManager.Instance.Move(CurrentLayer.gameObject, -_zoomTileDistanceFromMapCenter * 2, pZoomDuration, TweenType.Linear, true);
 
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale * 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
@@ -298,8 +315,6 @@ namespace OSM
 			if (_currentZoomLevel > MIN_ZOOM_LEVEL)
 			{
 				NextZoomLevel--;
-
-				//TweenManager.Instance.Move(CurrentLayer.gameObject, -_zoomTileDistanceFromMapCenter / 2, pZoomDuration, TweenType.Linear, true);
 
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale / 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
