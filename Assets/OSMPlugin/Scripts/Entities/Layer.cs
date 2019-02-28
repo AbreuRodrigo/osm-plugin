@@ -21,6 +21,10 @@ namespace OSM
 
 		private LayerConfig _config;
 
+		private bool _isScalingToOne;
+		private float _scalingToOneDelay = 0;
+		private float _scalingToOneTime = 0;
+
 		public float TileSize { get { return _tileSize; } }
 		public int RenderingOrder { get { return _renderingOrder; } }
 		public TileData CenterTileData { get; set; }
@@ -47,6 +51,21 @@ namespace OSM
 		}
 
 		public Tile CenterTile { get; private set; }
+
+		private void LateUpdate()
+		{
+			if(_isScalingToOne)
+			{
+				_scalingToOneTime += Time.deltaTime;
+
+				if (_scalingToOneTime >= _scalingToOneDelay)
+				{
+					_isScalingToOne = false;
+					gameObject.transform.localScale = Vector3.one;
+					_scalingToOneTime = 0;
+				}
+			}
+		}
 
 		public void AddTile(Tile pTile)
 		{
@@ -161,11 +180,13 @@ namespace OSM
 
 		public void ChangeRenderingLayer(int pNewLayerOrder)
 		{
-			foreach(Tile tile in _tiles)
+			_renderingOrder = pNewLayerOrder;
+
+			foreach (Tile tile in _tiles)
 			{
 				if(tile != null)
 				{
-					tile.SetRenderingLayer(pNewLayerOrder);
+					tile.SetRenderingLayer(_renderingOrder);					
 				}
 			}
 		}
@@ -194,12 +215,33 @@ namespace OSM
 			}
 		}
 
+		public void ScaleToOne(float pDelay)
+		{
+			_isScalingToOne = true;
+			_scalingToOneDelay = pDelay;
+		}
+
 		public void ClearTileTextures()
 		{
 			foreach (Tile tile in _tiles)
 			{
 				tile.ClearTexture();
 			}
+		}
+
+		public Tile GetTopLeftTile()
+		{
+			Tile tile = _tiles[0];
+			
+			foreach (Tile t in _tiles)
+			{
+				if(tile.X >= t.X && tile.Y >= t.Y)
+				{
+					tile = t;
+				}
+			}
+
+			return tile;
 		}
 
 		bool isChangingAlpha = false;

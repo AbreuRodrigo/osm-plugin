@@ -10,10 +10,10 @@ namespace OSM
 		public const int MIN_ZOOM_LEVEL = 3;
 		public const int MAX_ZOOM_LEVEL = 19;
 
-		private const int TILE_SIZE_IN_PIXELS = 256;
-		private const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
-		private const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
-		private const string LAYER_BASE_NAME = "Layer";
+		public const int TILE_SIZE_IN_PIXELS = 256;
+		public const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
+		public const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
+		public const string LAYER_BASE_NAME = "Layer";
 
 		[Header("Layer Properties")]
 		[SerializeField]
@@ -27,7 +27,7 @@ namespace OSM
 
 		public float _mapMinYByZoomLevel;
 		public float _mapMaxYByZoomLevel;
-				
+
 		[Header("Dependencies")]
 		public Camera mainCamera;
 
@@ -55,7 +55,7 @@ namespace OSM
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 
-		private int _tileCycleLimit;		
+		private int _tileCycleLimit;
 
 		public ScreenBoundaries _screenBoundaries;
 
@@ -76,15 +76,6 @@ namespace OSM
 
 		private bool _isScaling;
 
-		[Space(5)]
-		[Header("Debug")]
-		[SerializeField]
-		private bool _debugScreenLimits;
-		[SerializeField]
-		private bool _showDebugTargetTile;
-		[SerializeField]
-		private GameObject _screenLimitsMarker;
-
 		private void Start()
 		{
 			StopMovements();
@@ -93,7 +84,8 @@ namespace OSM
 			InitialZoom();
 
 			CalculateScreenBoundaries();
-			CreateDebugFeatures();	
+
+			DebugManager.Instance.CreateDebugFeatures();
 		}
 
 		private void Update()
@@ -112,16 +104,14 @@ namespace OSM
 		}
 
 		private void LateUpdate()
-		{					
+		{
 			if (_tileValidationCounter >= _tileValidationSeconds)
 			{
 				ValidateTiles();
 				_tileValidationCounter = 0;
 			}
 
-			_tileValidationCounter += Time.deltaTime;
-
-			ShowDebugTargetTile();
+			_tileValidationCounter += Time.deltaTime;						
 		}
 
 		public void UpdateTargetCoordinateBasedInTile()
@@ -132,73 +122,18 @@ namespace OSM
 				{
 					Vector3 mp = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
 
-					if (tile.transform.position.x + 1.28 > mp.x && tile.transform.position.x - 1.28f < mp.x &&
-						tile.transform.position.y + 1.28 > mp.y && tile.transform.position.y - 1.28f < mp.y)
+					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > mp.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < mp.x &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < mp.y)
 					{
 						Coordinates c = OSMGeoHelper.TileToWorldPos(tile.X, tile.Y, _currentZoomLevel);
 
-						_currentLatitude = c.latitude;
-						_currentLongitude = c.longitude;
+						//_currentLatitude = c.latitude;
+						//_currentLongitude = c.longitude;
+						_zoomTileDistanceFromMapCenter = tile.transform.position;
 
-						_zoomTileDistanceFromMapCenter = mp;
 						break;
 					}
 				}
-			}
-		}
-
-		private void CreateDebugFeatures()
-		{
-			if (_debugScreenLimits && _screenLimitsMarker != null)
-			{
-				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, 0, 0);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, _screenBoundaries.top, 0);
-
-				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.top, 0);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.left, _screenBoundaries.bottom, 0);
-
-				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, 0, 0);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, _screenBoundaries.top, 0);
-
-				screenLimitMarker = Instantiate(_screenLimitsMarker);
-				screenLimitMarker.transform.position = new Vector3(0, _screenBoundaries.bottom, 0);
-				screenLimitMarker.transform.position = new Vector3(_screenBoundaries.right, _screenBoundaries.bottom, 0);
-			}
-		}
-
-		private void ShowDebugTargetTile()
-		{
-			if (_showDebugTargetTile)
-			{
-				Vector3 mp = Vector3.zero;
-
-				foreach (Tile tile in CurrentLayer.Tiles)
-				{
-					if (CheckTileOnScreen(tile.transform.position))
-					{
-						mp = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
-
-						if (tile.transform.position.x + 1.28 > mp.x && tile.transform.position.x - 1.28f < mp.x &&
-							tile.transform.position.y + 1.28 > mp.y && tile.transform.position.y - 1.28f < mp.y)
-						{
-							Coordinates c = OSMGeoHelper.TileToWorldPos(tile.X, tile.Y, _currentZoomLevel);
-
-							_currentLatitude = c.latitude;
-							_currentLongitude = c.longitude;
-
-							tile._meshRenderer.material.color = Color.yellow;
-						}
-						else
-						{
-							tile._meshRenderer.material.color = Color.white;
-						}
-					}
-				}
-
-				Debug.DrawLine(Vector3.zero, mp);
 			}
 		}
 
@@ -214,9 +149,20 @@ namespace OSM
 
 		protected void ValidateTiles()
 		{
-			foreach(Tile tile in CurrentLayer.Tiles)
+			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if(CheckTileOnScreen(tile.transform.position) && tile.TextureUpToDate == false)
+				if (CheckTileOnScreen(tile.transform.position) && tile.TextureUpToDate == false)
+				{
+					DoTileDownload(tile.TileData);
+				}
+			}
+		}
+
+		protected void ValidateAllTiles()
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				if (tile.TextureUpToDate == false)
 				{
 					DoTileDownload(tile.TileData);
 				}
@@ -227,7 +173,7 @@ namespace OSM
 		{
 			TileSize = _tileTemplate.TileSize.x;
 
-			if(TileSize == 0)
+			if (TileSize == 0)
 			{
 				TileSize = TILE_SIZE_IN_PIXELS;
 			}
@@ -239,10 +185,10 @@ namespace OSM
 		{
 			int layerIndex = 0;
 
-			foreach(LayerConfig layerConfig in layerConfigs)
+			foreach (LayerConfig layerConfig in layerConfigs)
 			{
 				Layer layer = Instantiate(_layerTemplate, transform);
-				layer.gameObject.name = LAYER_BASE_NAME + ( layerIndex + 1 );
+				layer.gameObject.name = LAYER_BASE_NAME + (layerIndex + 1);
 				layer.Index = layerIndex;
 				layer.Config = layerConfig;
 				layer.SetTileSize(TileSize);
@@ -253,7 +199,7 @@ namespace OSM
 				{
 					CurrentLayer = layer;
 				}
-				else if(OtherLayer == null)
+				else if (OtherLayer == null)
 				{
 					OtherLayer = layer;
 				}
@@ -266,65 +212,80 @@ namespace OSM
 
 		public void ZoomIn()
 		{
-			UpdateTargetCoordinateBasedInTile();
-
 			ExecuteZooming(1);
-
-			ForcePrepareTilesForDownload();
 		}
 
 		public void ZoomOut()
 		{
-			UpdateTargetCoordinateBasedInTile();
-
 			ExecuteZooming(-1);
-
-			ForcePrepareTilesForDownload();
 		}
 
 		private void ForcePrepareTilesForDownload()
 		{
-			foreach(Tile tile in CurrentLayer.Tiles)
+			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if(CheckTileOnScreen(tile.transform.position))
-				{
-					PrepareTileDataDownload(tile);
-				}
-			}						
+				PrepareTileDataDownload(tile);
+			}
 		}
 
 		public void PrepareZoomIn(float pZoomDuration, Action pOnComplete)
-		{			
+		{
 			if (_currentZoomLevel < MAX_ZOOM_LEVEL)
 			{
 				NextZoomLevel++;
 
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale * 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
-					//CurrentLayer.gameObject.transform.localScale = Vector3.one;
+					ExecuteZoomProcedures();
 					pOnComplete?.Invoke();
-					//ValidateTiles();										
 				});
-
-				//SwapLayers();
 			}
 		}
 
 		public void PrepareZoomOut(float pZoomDuration, Action pOnComplete)
-		{			
+		{
 			if (_currentZoomLevel > MIN_ZOOM_LEVEL)
 			{
 				NextZoomLevel--;
 
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale / 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
-					//CurrentLayer.gameObject.transform.localScale = Vector3.one;
+					ExecuteZoomProcedures();
 					pOnComplete?.Invoke();
-					//ValidateTiles();										
 				});
-								
-				//SwapLayers();
 			}
+		}
+
+		private void ExecuteZoomProcedures()
+		{
+			OtherLayer.FadeOut(0);
+
+			OtherLayer.transform.position = CurrentLayer.transform.position;
+
+			DoZoomDisplacement(OtherLayer);
+
+			UpdateZoomLevel();
+
+			ReferenceTilesBetweenLayers();
+
+			ValidateTiles();
+
+			SwapLayers();
+
+			CurrentLayer.FadeIn(0.5f);
+
+			OtherLayer.FadeOut(1f);
+			OtherLayer.ScaleToOne(1f);
+
+			//UpdateTargetCoordinateBasedInTile();
+			//DefineCenterTileOnCurrentLayer();
+			CalculateScreenBoundaries();
+			//DownloadInitialTiles();
+
+			//UpdateTargetCoordinateBasedInTile();
+			//DefineCenterTileOnCurrentLayer();
+			//CalculateScreenBoundaries();
+			//DownloadInitialTiles();
 		}
 
 		public void InitialZoom()
@@ -343,6 +304,42 @@ namespace OSM
 
 			DefineCenterTileOnCurrentLayer();
 			DownloadInitialTiles();
+		}
+
+		private void ExecuteZooming(int pZoomLevel = 0)
+		{
+			_currentZoomLevel += pZoomLevel;
+
+			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
+			{
+				_currentZoomLevel = MIN_ZOOM_LEVEL;
+			}
+			if (_currentZoomLevel > MAX_ZOOM_LEVEL)
+			{
+				_currentZoomLevel = MAX_ZOOM_LEVEL;
+			}
+
+			UpdateTargetCoordinateBasedInTile();
+			DefineCenterTileOnCurrentLayer();
+			CalculateScreenBoundaries();
+			DownloadInitialTiles();
+		}
+
+		private void UpdateZoomLevel()
+		{
+			_currentZoomLevel = NextZoomLevel;
+		}
+
+		private void DoZoomDisplacement(Layer pLayer, int pDuration = 0)
+		{
+			if (_previousZoomLevel != _currentZoomLevel)
+			{
+				Vector3 dest = pLayer.transform.position + (_previousZoomLevel > _currentZoomLevel ? _displacementLevel : -_displacementLevel);
+
+				_previousZoomLevel = _currentZoomLevel;
+
+				TweenManager.Instance.SlideTo(pLayer.gameObject, dest, pDuration);
+			}
 		}
 
 		public void SetMovingLeft()
@@ -380,37 +377,6 @@ namespace OSM
 			_isMovingDown = false;
 			_isMovingUp = false;
 			_isStopped = true;
-		}
-
-		private void ExecuteZooming(int pZoomLevel = 0)
-		{
-			_currentZoomLevel += pZoomLevel;
-
-			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
-			{
-				_currentZoomLevel = MIN_ZOOM_LEVEL;
-			}
-			if (_currentZoomLevel > MAX_ZOOM_LEVEL)
-			{
-				_currentZoomLevel = MAX_ZOOM_LEVEL;
-			}
-			
-			DefineCenterTileOnCurrentLayer();
-			CalculateScreenBoundaries();
-			CheckCurrentLayerWithinScreenLimits();
-			DownloadInitialTiles();
-		}
-
-		private void DoZoomDisplacement()
-		{
-			if (_previousZoomLevel != _currentZoomLevel)
-			{
-				Vector3 dest = CurrentLayer.transform.position + (_previousZoomLevel > _currentZoomLevel ? _displacementLevel : -_displacementLevel);
-
-				_previousZoomLevel = _currentZoomLevel;
-
-				TweenManager.Instance.SlideTo(CurrentLayer.gameObject, dest, 1);
-			}
 		}
 
 		private void ScaleTo(GameObject pTarget, Vector3 pEnd, float pDuration)
@@ -454,9 +420,8 @@ namespace OSM
 
 		private void DoTileDownload(TileData pTileData)
 		{			
-			if (pTileData.zoom != _currentZoomLevel || pTileData.x < 0 || pTileData.y < 0)
+			if (pTileData.x < 0 || pTileData.y < 0)
 			{
-				pTileData.name = null;
 				CurrentLayer.SetTexture(pTileData.index, null);
 			}
 			else
@@ -468,7 +433,7 @@ namespace OSM
 			}			
 		}
 
-		private bool CheckTileOnScreen(Vector3 tilePosition)
+		public bool CheckTileOnScreen(Vector3 tilePosition)
 		{
 			return tilePosition.x + TILE_HALF_SIZE_IN_UNITS >= _screenBoundaries.left &&
 				   tilePosition.x - TILE_HALF_SIZE_IN_UNITS <= _screenBoundaries.right &&
@@ -496,28 +461,73 @@ namespace OSM
 		{
 			if (CurrentLayer != null && OtherLayer != null)
 			{
-				float fadingSpeed = 0.5f;
-				OtherLayer.FadeOut(0);
-				
 				_auxLayer = CurrentLayer;
 				CurrentLayer = OtherLayer;
 				OtherLayer = _auxLayer;
 
 				OtherLayer.ChangeRenderingLayer(CurrentLayer.RenderingOrder);
 				CurrentLayer.ChangeRenderingLayer(_auxLayer.RenderingOrder);
-												
-				if (NextZoomLevel != _currentZoomLevel)
-				{
-					ExecuteZooming(NextZoomLevel > _currentZoomLevel ? 1 : -1);
-					NextZoomLevel = _currentZoomLevel;
-				}				
 
 				_auxLayer = null;
+			}
+		}
 
-				for (int i = 0; i < OtherLayer.Tiles.Count; i++)
+		private void ReferenceTilesBetweenLayers()
+		{
+			TileData tileData = new TileData();
+			Tile firstTile = OtherLayer.GetTopLeftTile();
+
+			tileData.zoom = _currentZoomLevel;
+
+			foreach (Tile t in CurrentLayer.Tiles)
+			{
+				if (firstTile.transform.position.x > t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.x < t.transform.position.x + TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.y > t.transform.position.y - TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.y < t.transform.position.y + TILE_HALF_SIZE_IN_UNITS)
 				{
-					CurrentLayer.Tiles[i].transform.position = OtherLayer.Tiles[i].transform.position;
+					//Define X
+					if (firstTile.transform.position.x > t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
+						firstTile.transform.position.x < t.transform.position.x)
+					{
+						tileData.x = t.X * 2;
+					}
+					else if (firstTile.transform.position.x >= t.transform.position.x &&
+						firstTile.transform.position.x < t.transform.position.x + TILE_HALF_SIZE_IN_UNITS)
+					{
+						tileData.x = t.X * 2 + 1;
+					}
+
+					//Define Y
+					if (firstTile.transform.position.y < t.transform.position.y + TILE_HALF_SIZE_IN_UNITS &&
+						firstTile.transform.position.y > t.transform.position.y)
+					{
+						tileData.y = t.Y * 2;
+					}
+					else if (firstTile.transform.position.y <= t.transform.position.y &&
+						firstTile.transform.position.y > t.transform.position.y - TILE_HALF_SIZE_IN_UNITS)
+					{
+						tileData.y = t.Y * 2 + 1;
+					}
+
+					tileData.RedefineName();
+					firstTile.TileData = tileData;
+					break;
 				}
+			}
+						
+			int height = OtherLayer.Config.height;
+
+			Tile tileRef = null;
+
+			for(int i = 1; i < OtherLayer.Tiles.Count; i++)
+			{
+				tileRef = OtherLayer.Tiles[i];
+
+				int x = (int)((tileRef.transform.localPosition.x - firstTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
+				int y = (int)((tileRef.transform.localPosition.y - firstTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+
+				tileRef.TileData = new TileData(tileRef.TileData.index, _currentZoomLevel, tileData.x + x, tileData.y + y);
 			}
 		}
 
