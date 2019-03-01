@@ -84,6 +84,7 @@ namespace OSM
 			InitialZoom();
 
 			CalculateScreenBoundaries();
+			CheckInsideScreenInitially();
 
 			DebugManager.Instance.CreateDebugFeatures();
 		}
@@ -127,8 +128,12 @@ namespace OSM
 					{
 						Coordinates c = OSMGeoHelper.TileToWorldPos(tile.X, tile.Y, _currentZoomLevel);
 
+						Debug.Log(tile.name + "   " + tile.Index);
+						Debug.Log(c.latitude + " " + c.longitude);
+
 						//_currentLatitude = c.latitude;
 						//_currentLongitude = c.longitude;
+
 						_zoomTileDistanceFromMapCenter = tile.transform.position;
 
 						break;
@@ -257,9 +262,8 @@ namespace OSM
 		}
 
 		private void ExecuteZoomProcedures()
-		{
+		{			
 			OtherLayer.FadeOut(0);
-
 			OtherLayer.transform.position = CurrentLayer.transform.position;
 
 			DoZoomDisplacement(OtherLayer);
@@ -272,20 +276,20 @@ namespace OSM
 
 			SwapLayers();
 
-			CurrentLayer.FadeIn(0.5f);
-
-			OtherLayer.FadeOut(1f);
-			OtherLayer.ScaleToOne(1f);
-
-			//UpdateTargetCoordinateBasedInTile();
-			//DefineCenterTileOnCurrentLayer();
+			UpdateTargetCoordinateBasedInTile();
+			DefineCenterTileOnCurrentLayer();
 			CalculateScreenBoundaries();
-			//DownloadInitialTiles();
 
-			//UpdateTargetCoordinateBasedInTile();
-			//DefineCenterTileOnCurrentLayer();
-			//CalculateScreenBoundaries();
-			//DownloadInitialTiles();
+			Vector3 layerPos = CurrentLayer.transform.position;
+			transform.position = layerPos;
+			CurrentLayer.transform.position = Vector3.zero;
+			OtherLayer.transform.position = Vector3.zero;
+
+			DownloadInitialTiles();
+
+			CurrentLayer.FadeIn(0.5f);
+			OtherLayer.FadeOut(0.5f);
+			OtherLayer.ScaleToOne(1f);
 		}
 
 		public void InitialZoom()
@@ -388,6 +392,8 @@ namespace OSM
 		{
 			CurrentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
 			_centerTileData = CurrentLayer.CenterTile.TileData;
+
+			Debug.Log("CENTER: " + _centerTileData.name + " " + _centerTileData.index + " " + _centerTileData.x + " " + _centerTileData.y);
 		}
 
 		private void PrepareTileDataDownload(Tile tile)
@@ -445,12 +451,15 @@ namespace OSM
 		{
 			if (CurrentLayer != null)
 			{
+				int x = 0;
+				int y = 0;
+
 				foreach (Tile tile in CurrentLayer.Tiles)
 				{
-					int x = (int)(tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);//tile x position for tile size scale
-					int y = (int)(tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//tile y position for tile size scale
+					x = _centerTileData.x + (int)(tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);//tile x position for tile size scale
+					y = _centerTileData.y + (int)(tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//tile y position for tile size scale
 
-					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, x, y);
 
 					DoTileDownload(tile.TileData);
 				}
@@ -576,6 +585,52 @@ namespace OSM
 						tile.transform.localPosition += _helperVector3;
 						PrepareTileDataDownload(tile);
 					}
+				}
+			}
+		}
+
+		private void CheckInsideScreenInitially()
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.left)
+				{
+					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
+					_helperVector3.y = 0;
+					_helperVector3.z = 0;
+
+					tile.transform.localPosition += _helperVector3;
+					PrepareTileDataDownload(tile);
+				}
+
+				if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.right)
+				{
+					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
+					_helperVector3.y = 0;
+					_helperVector3.z = 0;
+
+					tile.transform.localPosition -= _helperVector3;
+					PrepareTileDataDownload(tile);
+				}
+
+				if (tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.top)
+				{
+					_helperVector3.x = 0;
+					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
+					_helperVector3.z = 0;
+
+					tile.transform.localPosition -= _helperVector3;
+					PrepareTileDataDownload(tile);
+				}
+
+				if (tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.bottom)
+				{
+					_helperVector3.x = 0;
+					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
+					_helperVector3.z = 0;
+
+					tile.transform.localPosition += _helperVector3;
+					PrepareTileDataDownload(tile);
 				}
 			}
 		}

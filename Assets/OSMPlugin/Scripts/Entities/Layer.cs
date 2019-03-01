@@ -135,9 +135,9 @@ namespace OSM
 		public void DefineCenterTile(int pZoom, double pLatitude, double pLongitude)
 		{
 			CenterTile = _tiles[_totalTiles / 2];
-			int index = CenterTile.Index;
-			CenterTile.TileData = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
-			CenterTile.Index = index;
+			TileData data = OSMGeoHelper.GetTileData(pZoom, pLatitude, pLongitude);
+			data.index = CenterTile.TileData.index;
+			CenterTile.TileData = data;
 		}
 
 		private int GetTileIndexByXY(int x, int y)

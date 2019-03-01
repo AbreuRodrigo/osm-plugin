@@ -15,7 +15,15 @@ namespace OSM
 		public int Index
 		{
 			get { return _tileData.index; }
-			set { _tileData.index = value; }
+			set
+			{
+				if (_tileData.index != value)
+				{
+					Debug.Log("Tile Name: " + Name + " Was: " + _tileData.index + " Will be: " + value);
+				}
+
+				_tileData.index = value;
+			}
 		}
 
 		public int Zoom
@@ -130,9 +138,9 @@ namespace OSM
 				{
 					SetAlpha(0);
 
-					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);									
+					_tileSize = transform.localScale = new Vector3(pTexture.width * 0.01f, pTexture.width * 0.01f, 1);
 
-					_meshRenderer.material.name = gameObject.name = pTexture.name;
+					_meshRenderer.name = _meshRenderer.material.name = gameObject.name = pTexture.name;
 					_meshRenderer.material.mainTexture = pTexture;										
 					_meshRenderer.material.mainTexture.wrapMode = TextureWrapMode.Clamp;
 					_meshRenderer.material.mainTexture.filterMode = FilterMode.Trilinear;
