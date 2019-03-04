@@ -246,15 +246,19 @@ namespace OSM
 
 				_layerContainer.transform.SetParent(null);
 				_layerContainer.transform.position = Vector3.zero;
-				_layerContainer.transform.SetParent(transform);
+
 				CurrentLayer.transform.SetParent(_layerContainer.transform);
+				OtherLayer.transform.SetParent(_layerContainer.transform);
 
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale * 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
+					_layerContainer.transform.SetParent(transform);
+
 					CurrentLayer.transform.SetParent(transform);
 					OtherLayer.transform.SetParent(transform);
 
 					ExecuteZoomProcedures();
+
 					pOnComplete?.Invoke();
 
 					//_currentZoomLevel = NextZoomLevel;
@@ -272,14 +276,11 @@ namespace OSM
 			{
 				NextZoomLevel--;
 
-				//TweenManager.Instance.Move(gameObject, _zoomTileDistanceFromMapCenter, pZoomDuration, TweenType.Linear);
-
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale / 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
 					ExecuteZoomProcedures();
 					pOnComplete?.Invoke();
-
-					//_currentZoomLevel = NextZoomLevel;
+					UpdateZoomLevel();
 				});
 			}
 			else
@@ -289,29 +290,30 @@ namespace OSM
 		}
 
 		private void ExecuteZoomProcedures()
-		{			
+		{
 			OtherLayer.FadeOut(0);
 			OtherLayer.transform.position = CurrentLayer.transform.position;
-
-			//DoZoomDisplacement(OtherLayer);
+						
 			UpdateZoomLevel();
+
 			ReferenceTilesBetweenLayers();
+
 			SwapLayers();
 
 			UpdateTargetCoordinateBasedInTile();
 			DefineCenterTileOnCurrentLayer();
 			CalculateScreenBoundaries();
 
-			foreach (Tile tile in CurrentLayer.Tiles)
+			/*foreach (Tile tile in CurrentLayer.Tiles)
 			{
 				DoTileDownload(tile.TileData);
-			}
+			}*/
+
+			DownloadInitialTiles();
 
 			CurrentLayer.FadeIn(0.5f);
 			OtherLayer.FadeOut(0.5f);
-			OtherLayer.ScaleToOne(1f);
-
-			ValidateTiles();
+			OtherLayer.ScaleToOne(1f);						
 		}
 
 		public void InitialZoom()
