@@ -27,6 +27,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &1611791418809890
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4421836354750058}
+  m_Layer: 0
+  m_Name: LayerContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!4 &4076699977968908
 Transform:
   m_ObjectHideFlags: 1
@@ -36,8 +51,22 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 4421836354750058}
   m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &4421836354750058
+Transform:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1611791418809890}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4076699977968908}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &114169103650093720
@@ -56,10 +85,10 @@ MonoBehaviour:
     layerOrder: 3
     width: 7
     height: 7
-  - type: 1
+  - type: 0
     layerOrder: 2
-    width: 7
-    height: 7
+    width: 6
+    height: 6
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
   _mapMinYByZoomLevel: 0
@@ -70,6 +99,7 @@ MonoBehaviour:
     type: 2}
   _layerTemplate: {fileID: 114939389103965722, guid: e5a8b06161cb24f44a65ad28ad42379d,
     type: 2}
+  _tileCycleLimit: 0
   _screenBoundaries:
     left: 0
     top: 0
@@ -80,7 +110,10 @@ MonoBehaviour:
   _isMovingUp: 0
   _isMovingDown: 0
   _isStopped: 0
-  _debugScreenLimits: 0
-  _showDebugTargetTile: 0
-  _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
-    type: 2}
+  _centerTileData:
+    index: 0
+    zoom: 0
+    x: 0
+    y: 0
+    name: 
+  _layerContainer: {fileID: 1611791418809890}

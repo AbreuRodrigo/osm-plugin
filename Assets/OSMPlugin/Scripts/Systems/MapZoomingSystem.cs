@@ -18,7 +18,7 @@ namespace OSM
 			if (_isZooming == false && Input.mouseScrollDelta.y != 0)
 			{
 				_isZooming = true;
-
+								
 				_map.UpdateTargetCoordinateBasedInTile();
 
 				if (Input.mouseScrollDelta.y == 1)

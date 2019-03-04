@@ -19,7 +19,7 @@ namespace OSM
 			{
 				if (_tileData.index != value)
 				{
-					Debug.Log("Tile Name: " + Name + " Was: " + _tileData.index + " Will be: " + value);
+					//Debug.Log("Tile Name: " + Name + " Was: " + _tileData.index + " Will be: " + value);
 				}
 
 				_tileData.index = value;

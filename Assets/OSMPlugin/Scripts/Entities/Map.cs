@@ -7,6 +7,9 @@ namespace OSM
 {
 	public class Map : MonoBehaviour
 	{
+		public const string CURRENT_LAYER = "CurrentLayer";
+		public const string OTHER_LAYER = "OtherLayer";
+
 		public const int MIN_ZOOM_LEVEL = 3;
 		public const int MAX_ZOOM_LEVEL = 19;
 
@@ -55,7 +58,7 @@ namespace OSM
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 
-		private int _tileCycleLimit;
+		public int _tileCycleLimit;
 
 		public ScreenBoundaries _screenBoundaries;
 
@@ -69,11 +72,15 @@ namespace OSM
 		public float TileSize { get; private set; }
 		public float CurrentZoomLevel { get { return _currentZoomLevel; } }
 
+		[SerializeField]
 		private TileData _centerTileData;
 		private Vector3 _displacementLevel;
 		private Vector3 _helperVector3;
 		private Vector3 _zoomTileDistanceFromMapCenter;
 
+		[SerializeField]
+		private GameObject _layerContainer;
+		
 		private bool _isScaling;
 
 		private void Start()
@@ -121,18 +128,15 @@ namespace OSM
 			{
 				if (CheckTileOnScreen(tile.transform.position))
 				{
-					Vector3 mp = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
+					Vector3 mp = Vector3.zero;//mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
 
-					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > mp.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < mp.x &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < mp.y)
+					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS >= mp.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS <= mp.x &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS >= mp.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS <= mp.y)
 					{
 						Coordinates c = OSMGeoHelper.TileToWorldPos(tile.X, tile.Y, _currentZoomLevel);
 
-						Debug.Log(tile.name + "   " + tile.Index);
-						Debug.Log(c.latitude + " " + c.longitude);
-
-						//_currentLatitude = c.latitude;
-						//_currentLongitude = c.longitude;
+						_currentLatitude = c.latitude;
+						_currentLongitude = c.longitude;
 
 						_zoomTileDistanceFromMapCenter = tile.transform.position;
 
@@ -193,7 +197,6 @@ namespace OSM
 			foreach (LayerConfig layerConfig in layerConfigs)
 			{
 				Layer layer = Instantiate(_layerTemplate, transform);
-				layer.gameObject.name = LAYER_BASE_NAME + (layerIndex + 1);
 				layer.Index = layerIndex;
 				layer.Config = layerConfig;
 				layer.SetTileSize(TileSize);
@@ -203,10 +206,12 @@ namespace OSM
 				if (CurrentLayer == null)
 				{
 					CurrentLayer = layer;
+					CurrentLayer.gameObject.name = CURRENT_LAYER;
 				}
 				else if (OtherLayer == null)
 				{
 					OtherLayer = layer;
+					OtherLayer.gameObject.name = OTHER_LAYER;
 				}
 
 				_layers.Add(layer);
@@ -239,11 +244,25 @@ namespace OSM
 			{
 				NextZoomLevel++;
 
+				_layerContainer.transform.SetParent(null);
+				_layerContainer.transform.position = Vector3.zero;
+				_layerContainer.transform.SetParent(transform);
+				CurrentLayer.transform.SetParent(_layerContainer.transform);
+
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale * 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
+					CurrentLayer.transform.SetParent(transform);
+					OtherLayer.transform.SetParent(transform);
+
 					ExecuteZoomProcedures();
 					pOnComplete?.Invoke();
+
+					//_currentZoomLevel = NextZoomLevel;
 				});
+			}
+			else
+			{
+				pOnComplete?.Invoke();
 			}
 		}
 
@@ -253,11 +272,19 @@ namespace OSM
 			{
 				NextZoomLevel--;
 
+				//TweenManager.Instance.Move(gameObject, _zoomTileDistanceFromMapCenter, pZoomDuration, TweenType.Linear);
+
 				TweenManager.Instance.ScaleTo(CurrentLayer.gameObject, CurrentLayer.gameObject.transform.localScale / 2, pZoomDuration, TweenType.Linear, true, null, () =>
 				{
 					ExecuteZoomProcedures();
 					pOnComplete?.Invoke();
+
+					//_currentZoomLevel = NextZoomLevel;
 				});
+			}
+			else
+			{
+				pOnComplete?.Invoke();
 			}
 		}
 
@@ -266,30 +293,25 @@ namespace OSM
 			OtherLayer.FadeOut(0);
 			OtherLayer.transform.position = CurrentLayer.transform.position;
 
-			DoZoomDisplacement(OtherLayer);
-
+			//DoZoomDisplacement(OtherLayer);
 			UpdateZoomLevel();
-
 			ReferenceTilesBetweenLayers();
-
-			ValidateTiles();
-
 			SwapLayers();
 
 			UpdateTargetCoordinateBasedInTile();
 			DefineCenterTileOnCurrentLayer();
 			CalculateScreenBoundaries();
 
-			Vector3 layerPos = CurrentLayer.transform.position;
-			transform.position = layerPos;
-			CurrentLayer.transform.position = Vector3.zero;
-			OtherLayer.transform.position = Vector3.zero;
-
-			DownloadInitialTiles();
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				DoTileDownload(tile.TileData);
+			}
 
 			CurrentLayer.FadeIn(0.5f);
 			OtherLayer.FadeOut(0.5f);
 			OtherLayer.ScaleToOne(1f);
+
+			ValidateTiles();
 		}
 
 		public void InitialZoom()
@@ -312,18 +334,21 @@ namespace OSM
 
 		private void ExecuteZooming(int pZoomLevel = 0)
 		{
+			UpdateTargetCoordinateBasedInTile();
+
 			_currentZoomLevel += pZoomLevel;
 
 			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
 			{
 				_currentZoomLevel = MIN_ZOOM_LEVEL;
+				return;
 			}
 			if (_currentZoomLevel > MAX_ZOOM_LEVEL)
 			{
 				_currentZoomLevel = MAX_ZOOM_LEVEL;
+				return;
 			}
 
-			UpdateTargetCoordinateBasedInTile();
 			DefineCenterTileOnCurrentLayer();
 			CalculateScreenBoundaries();
 			DownloadInitialTiles();
@@ -392,8 +417,6 @@ namespace OSM
 		{
 			CurrentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
 			_centerTileData = CurrentLayer.CenterTile.TileData;
-
-			Debug.Log("CENTER: " + _centerTileData.name + " " + _centerTileData.index + " " + _centerTileData.x + " " + _centerTileData.y);
 		}
 
 		private void PrepareTileDataDownload(Tile tile)
@@ -472,7 +495,10 @@ namespace OSM
 			{
 				_auxLayer = CurrentLayer;
 				CurrentLayer = OtherLayer;
+				CurrentLayer.gameObject.name = CURRENT_LAYER;
+
 				OtherLayer = _auxLayer;
+				OtherLayer.gameObject.name = OTHER_LAYER;
 
 				OtherLayer.ChangeRenderingLayer(CurrentLayer.RenderingOrder);
 				CurrentLayer.ChangeRenderingLayer(_auxLayer.RenderingOrder);
@@ -490,31 +516,31 @@ namespace OSM
 
 			foreach (Tile t in CurrentLayer.Tiles)
 			{
-				if (firstTile.transform.position.x > t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
-					firstTile.transform.position.x < t.transform.position.x + TILE_HALF_SIZE_IN_UNITS &&
-					firstTile.transform.position.y > t.transform.position.y - TILE_HALF_SIZE_IN_UNITS &&
-					firstTile.transform.position.y < t.transform.position.y + TILE_HALF_SIZE_IN_UNITS)
+				if (firstTile.transform.position.x >= t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.x <= t.transform.position.x + TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.y >= t.transform.position.y - TILE_HALF_SIZE_IN_UNITS &&
+					firstTile.transform.position.y <= t.transform.position.y + TILE_HALF_SIZE_IN_UNITS)
 				{
 					//Define X
-					if (firstTile.transform.position.x > t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
-						firstTile.transform.position.x < t.transform.position.x)
+					if (firstTile.transform.position.x >= t.transform.position.x - TILE_HALF_SIZE_IN_UNITS &&
+						firstTile.transform.position.x <= t.transform.position.x)
 					{
 						tileData.x = t.X * 2;
 					}
 					else if (firstTile.transform.position.x >= t.transform.position.x &&
-						firstTile.transform.position.x < t.transform.position.x + TILE_HALF_SIZE_IN_UNITS)
+						firstTile.transform.position.x <= t.transform.position.x + TILE_HALF_SIZE_IN_UNITS)
 					{
 						tileData.x = t.X * 2 + 1;
 					}
 
 					//Define Y
-					if (firstTile.transform.position.y < t.transform.position.y + TILE_HALF_SIZE_IN_UNITS &&
-						firstTile.transform.position.y > t.transform.position.y)
+					if (firstTile.transform.position.y <= t.transform.position.y + TILE_HALF_SIZE_IN_UNITS &&
+						firstTile.transform.position.y >= t.transform.position.y)
 					{
 						tileData.y = t.Y * 2;
 					}
 					else if (firstTile.transform.position.y <= t.transform.position.y &&
-						firstTile.transform.position.y > t.transform.position.y - TILE_HALF_SIZE_IN_UNITS)
+						firstTile.transform.position.y >= t.transform.position.y - TILE_HALF_SIZE_IN_UNITS)
 					{
 						tileData.y = t.Y * 2 + 1;
 					}
