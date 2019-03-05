@@ -83,12 +83,12 @@ MonoBehaviour:
   layerConfigs:
   - type: 1
     layerOrder: 3
-    width: 7
-    height: 7
+    width: 3
+    height: 3
   - type: 1
     layerOrder: 2
-    width: 7
-    height: 7
+    width: 3
+    height: 3
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
   _mapMinYByZoomLevel: 0

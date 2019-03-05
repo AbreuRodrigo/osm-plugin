@@ -313,11 +313,13 @@ namespace OSM
 			UpdateZoomLevel();
 
 			SwapLayers();
-						
+												
 			TileData data = new TileData();
 			Vector3 tilePos = Vector3.zero;
 
-			foreach(Tile t in OtherLayer.Tiles)
+			CalculateScreenBoundaries();
+
+			foreach (Tile t in OtherLayer.Tiles)
 			{
 				if(CheckTileOnScreen(t.transform.position))
 				{
@@ -343,14 +345,12 @@ namespace OSM
 						t.transform.position.y + TILE_HALF_SIZE_IN_UNITS * t.transform.localScale.y > tilePos.y &&
 						t.transform.position.y - TILE_HALF_SIZE_IN_UNITS * t.transform.localScale.y < tilePos.y)
 					{
-						_centerTileData = new TileData(_currentZoomLevel, data.x * 2, data.y * 2);						
+						_centerTileData = new TileData(t.Index, _currentZoomLevel, data.x * 2, data.y * 2);
 						break;						
 					}
 				}
 			}
-
-			CalculateScreenBoundaries();
-
+					
 			DownloadInitialTiles();
 
 			CurrentLayer.FadeIn(0.5f);
