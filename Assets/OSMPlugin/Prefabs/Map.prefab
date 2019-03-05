@@ -85,10 +85,10 @@ MonoBehaviour:
     layerOrder: 3
     width: 7
     height: 7
-  - type: 0
+  - type: 1
     layerOrder: 2
-    width: 6
-    height: 6
+    width: 7
+    height: 7
   _currentLatitude: 49.2674573
   _currentLongitude: -123.0930032
   _mapMinYByZoomLevel: 0
