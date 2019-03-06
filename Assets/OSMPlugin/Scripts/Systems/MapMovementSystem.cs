@@ -56,6 +56,8 @@ namespace OSM
 				_releasePoint = _mainCamera.ScreenToWorldPoint(_helperVector);
 
 				StartInertia();
+
+				_map.CheckCurrentLayerWithinScreenLimits();
 			}
 
 			if (_isPressed == true)

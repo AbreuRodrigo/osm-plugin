@@ -47,13 +47,19 @@ namespace OSM
 		public string Name
 		{
 			get { return _tileData.name; }
-			set { _tileData.name = value; }
+			set
+			{
+				_tileData.name = value;
+			}
 		}
 
 		public TileData TileData
 		{
 			get { return _tileData; }
-			set { _tileData = value; }
+			set
+			{
+				_tileData = value;
+			}
 		}
 
 		public bool TextureUpToDate
