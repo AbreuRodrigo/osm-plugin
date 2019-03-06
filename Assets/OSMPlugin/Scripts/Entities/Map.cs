@@ -307,19 +307,19 @@ namespace OSM
 			if(pZoomLevel > 0)
 			{
 				OtherLayer.FadeOut(0);
+
 				ReferenceLayers();
 
-				CurrentLayer.transform.SetParent(_layerContainer.transform);								
+				CurrentLayer.transform.SetParent(_layerContainer.transform);
 
 				TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, 0.5f, TweenType.CubicOut, true, null, () => 
 				{
 					_layerContainer.transform.localScale = Vector3.one;
 
-					OtherLayer.transform.localScale = Vector3.one;
-					OtherLayer.transform.SetParent(null);
-					OtherLayer.transform.position = Vector3.zero;
 					OtherLayer.transform.SetParent(transform);
-					
+					OtherLayer.transform.localScale = Vector3.one;
+					OtherLayer.transform.position = Vector3.zero;
+
 					CurrentLayer.transform.SetParent(transform);
 					CurrentLayer.FadeOut(0.5f);									
 
@@ -332,7 +332,7 @@ namespace OSM
 
 					CalculateScreenBoundaries();
 					DownloadInitialTiles();
-					//ForcePrepareInScreenTilesForDownload();
+					ForcePrepareInScreenTilesForDownload();										
 				});
 			}
 			else if(pZoomLevel < 0)
@@ -363,7 +363,7 @@ namespace OSM
 
 					CalculateScreenBoundaries();
 					DownloadInitialTiles();
-					//ForcePrepareInScreenTilesForDownload();
+					ForcePrepareInScreenTilesForDownload();
 				});
 			}
 
