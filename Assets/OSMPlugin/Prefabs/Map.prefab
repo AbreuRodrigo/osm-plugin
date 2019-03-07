@@ -60,8 +60,8 @@ MonoBehaviour:
     layerOrder: 2
     width: 7
     height: 7
-  _currentLatitude: 49.2674573
-  _currentLongitude: -123.0930032
+  _currentLatitude: -11.87
+  _currentLongitude: -52.56
   _mapMinYByZoomLevel: 0
   _mapMaxYByZoomLevel: 0
   mainCamera: {fileID: 0}

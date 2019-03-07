@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +7,9 @@ namespace OSM
 {
 	public class Layer : MonoBehaviour
 	{
+		private const int BACK_RENDERING_LAYER = 2;
+		private const int FRONT_RENDERING_LAYER = 3;
+
 		private float _tileSize;
 		private List<Tile> _tiles = new List<Tile>();
 		private int _centerIndex;
@@ -25,9 +29,15 @@ namespace OSM
 		private float _scalingToOneDelay = 0;
 		private float _scalingToOneTime = 0;
 
+		private bool _isFadingOut;
+		private float _fadeOutTimer = 0;
+		private float _fadeOutDuration = 0;
+
 		public float TileSize { get { return _tileSize; } }
 		public int RenderingOrder { get { return _renderingOrder; } }
 		public TileData CenterTileData { get; set; }
+
+		private event Action _onCompleteFadingOut;
 
 		public LayerConfig Config
 		{
@@ -54,7 +64,7 @@ namespace OSM
 
 		private void LateUpdate()
 		{
-			if(_isScalingToOne)
+			if(_isScalingToOne == true)
 			{
 				_scalingToOneTime += Time.deltaTime;
 
@@ -63,6 +73,20 @@ namespace OSM
 					_isScalingToOne = false;
 					gameObject.transform.localScale = Vector3.one;
 					_scalingToOneTime = 0;
+				}
+			}
+
+			if(_isFadingOut == true)
+			{
+				_fadeOutTimer += Time.deltaTime;
+
+				if(_fadeOutTimer >= _fadeOutDuration)
+				{
+					_isFadingOut = false;
+					_fadeOutTimer = 0;
+					_fadeOutDuration = 0;
+
+					_onCompleteFadingOut?.Invoke();
 				}
 			}
 		}
@@ -191,6 +215,16 @@ namespace OSM
 			}
 		}
 
+		public void ChangeToBackLayer()
+		{
+			ChangeRenderingLayer(BACK_RENDERING_LAYER);
+		}
+
+		public void ChangeToFrontLayer()
+		{
+			ChangeRenderingLayer(FRONT_RENDERING_LAYER);
+		}
+
 		public void ManualFadeOut(float pInit, float pEnd, float pPercent)
 		{
 			foreach (Tile tile in _tiles)
@@ -199,11 +233,24 @@ namespace OSM
 			}
 		}
 
-		public void FadeOut(float pDuration)
+		public void FadeOut(float pDuration, Action onComplete = null)
 		{
-			foreach (Tile tile in _tiles)
-			{
-				tile.FadeOut(pDuration);
+			if (_isFadingOut == false)
+			{	
+				if(onComplete != null)
+				{
+					_onCompleteFadingOut -= onComplete;
+					_onCompleteFadingOut += onComplete;
+				}
+
+				_fadeOutDuration = pDuration;
+				_fadeOutTimer = 0;
+				_isFadingOut = true;
+
+				foreach (Tile tile in _tiles)
+				{
+					tile.FadeOut(pDuration);
+				}
 			}
 		}
 
@@ -235,7 +282,7 @@ namespace OSM
 			
 			foreach (Tile t in _tiles)
 			{
-				if(tile.X >= t.X && tile.Y >= t.Y)
+				if(t.transform.position.x <= tile.transform.position.x && t.transform.position.y >= tile.transform.position.y)
 				{
 					tile = t;
 				}
