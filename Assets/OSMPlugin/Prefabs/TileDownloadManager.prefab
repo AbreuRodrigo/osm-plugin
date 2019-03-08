@@ -52,4 +52,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _cacheAllTexturesAfterDownloading: 0
-  _clearUnusedTexturesEachXSeconds: 2
+  _clearUnusedTexturesEachXSeconds: 20

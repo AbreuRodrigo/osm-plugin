@@ -6,18 +6,25 @@ namespace OSM
 	[Serializable]
 	public struct ScreenBoundaries
 	{
+		private Vector3 _updateVector;
+		private Vector3 _maxScreenLimit;
+
 		public float left;
 		public float top;
 		public float right;
 		public float bottom;
 
-		public ScreenBoundaries(Camera camera)
+		public ScreenBoundaries(Camera pCamera)
 		{
-			Vector3 maxScreenLimit = camera.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, 1)) * 10;
-			this.left = -maxScreenLimit.x;
-			this.top = maxScreenLimit.y;
-			this.right = maxScreenLimit.x;
-			this.bottom = -maxScreenLimit.y;
+			_updateVector.x = Screen.width;
+			_updateVector.y = Screen.height;
+			_updateVector.z = 1;
+
+			_maxScreenLimit = pCamera.ScreenToWorldPoint(_updateVector) * 10;
+			left = -_maxScreenLimit.x;
+			top = _maxScreenLimit.y;
+			right = _maxScreenLimit.x;
+			bottom = -_maxScreenLimit.y;
 		}
 	}
 }
