@@ -80,7 +80,7 @@ namespace OSM
 			{
 				_fadeOutTimer += Time.deltaTime;
 
-				if(_fadeOutTimer >= _fadeOutDuration)
+				if (_fadeOutTimer >= _fadeOutDuration)
 				{
 					_isFadingOut = false;
 					_fadeOutTimer = 0;
@@ -233,24 +233,29 @@ namespace OSM
 			}
 		}
 
-		public void FadeOut(float pDuration, Action onComplete = null)
+		public void FadeOut(float pDuration, Action pOnComplete = null)
 		{
 			if (_isFadingOut == false)
 			{	
-				if(onComplete != null)
+				if(pOnComplete != null)
 				{
-					_onCompleteFadingOut -= onComplete;
-					_onCompleteFadingOut += onComplete;
+					_onCompleteFadingOut -= pOnComplete;
+					_onCompleteFadingOut += pOnComplete;
 				}
 
 				_fadeOutDuration = pDuration;
 				_fadeOutTimer = 0;
 				_isFadingOut = true;
 
-				foreach (Tile tile in _tiles)
-				{
-					tile.FadeOut(pDuration);
-				}
+				FadeOutAllTiles(pDuration);
+			}
+		}
+
+		private void FadeOutAllTiles(float pDuration)
+		{
+			foreach (Tile tile in _tiles)
+			{
+				tile.FadeOut(pDuration);
 			}
 		}
 

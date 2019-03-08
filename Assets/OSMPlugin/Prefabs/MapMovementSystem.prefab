@@ -54,5 +54,6 @@ MonoBehaviour:
   _useInertia: 1
   _inertiaDuration: 2
   _inertiaSpeedMultiplier: 0.25
+  _inertiaSpeedMultiplierMobile: 1.25
   _map: {fileID: 0}
   _mainCamera: {fileID: 0}

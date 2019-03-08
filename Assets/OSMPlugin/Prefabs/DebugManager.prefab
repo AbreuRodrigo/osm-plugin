@@ -51,8 +51,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0043defbe24c9704daee3d89275ef616, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _zoomLevelUI: {fileID: 0}
   _debugScreenLimits: 1
   _showDebugTargetTile: 0
+  _updateZoomLevel: 1
   _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
     type: 2}
   _map: {fileID: 0}

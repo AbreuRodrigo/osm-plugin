@@ -1,15 +1,22 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 namespace OSM
 {
 	public class DebugManager : MonoBehaviourSingleton<DebugManager>
 	{
+		[Header("UI")]
+		[SerializeField]
+		private Text _zoomLevelUI;
+
 		[Space(5)]
 		[Header("Debug")]
 		[SerializeField]
 		private bool _debugScreenLimits;
 		[SerializeField]
 		private bool _showDebugTargetTile;
+		[SerializeField]
+		private bool _updateZoomLevel;
 		[SerializeField]
 		private GameObject _screenLimitsMarker;
 
@@ -22,11 +29,12 @@ namespace OSM
 		private void LateUpdate()
 		{
 			ShowDebugTargetTile();
+			UpdateZoomLevel();
 		}
 
 		public void CreateDebugFeatures()
 		{
-			if (_debugScreenLimits && _screenLimitsMarker != null)
+			if (_debugScreenLimits == true && _screenLimitsMarker != null)
 			{
 				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
 				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.left, 0, 0);
@@ -48,7 +56,7 @@ namespace OSM
 
 		private void ShowDebugTargetTile()
 		{
-			if (_showDebugTargetTile)
+			if (_showDebugTargetTile == true)
 			{
 				Vector3 mp = Vector3.zero;
 
@@ -71,6 +79,14 @@ namespace OSM
 				}
 
 				Debug.DrawLine(Vector3.zero, mp);
+			}
+		}
+
+		private void UpdateZoomLevel()
+		{
+			if(_updateZoomLevel == true)
+			{
+				_zoomLevelUI.text = "Zoom: " + _map.CurrentZoomLevel;
 			}
 		}
 	}

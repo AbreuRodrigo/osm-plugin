@@ -283,7 +283,6 @@ namespace OSM
 			if (_currentZoomLevel < MAX_ZOOM_LEVEL)
 			{
 				NextZoomLevel++;
-
 			}
 			else
 			{
@@ -333,12 +332,7 @@ namespace OSM
 
 			if (pZoomLevel > 0)
 			{
-				//DoZoomIn();
-				DefineCenterTileOnCurrentLayer();
-
-				DownloadInitialTiles();
-
-				ForcePrepareTilesForDownload();
+				DoZoomIn();				
 			}
 			else if (pZoomLevel < 0)
 			{
@@ -374,7 +368,7 @@ namespace OSM
 
 				ReferenceTilesBetweenLayers();
 
-				ValidateOnScreenTiles();
+				//ValidateOnScreenTiles();
 
 				transform.position = _mapDeviationCorrection;
 
@@ -607,7 +601,10 @@ namespace OSM
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
-				DoTileDownload(tile.TileData);
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					DoTileDownload(tile.TileData);
+				}
 			}
 		}
 

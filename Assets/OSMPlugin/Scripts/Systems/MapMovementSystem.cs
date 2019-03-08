@@ -11,6 +11,8 @@ namespace OSM
 		private float _inertiaDuration = 1;
 		[SerializeField]
 		private float _inertiaSpeedMultiplier = 0.1f;
+		[SerializeField]
+		private float _inertiaSpeedMultiplierMobile = 0.1f;
 
 		private bool _isOnInertia;
 		private Vector3 _inertiaDirection;
@@ -31,6 +33,15 @@ namespace OSM
 		private Vector3 _previousMapPosition = Vector3.zero;
 		private Vector3 _mapLimitVector;
 		private Vector3 _helperVector;
+
+		private void Start()
+		{
+			if (Application.platform == RuntimePlatform.Android ||
+				Application.platform == RuntimePlatform.IPhonePlayer)
+			{
+				_inertiaSpeedMultiplier = _inertiaSpeedMultiplierMobile;
+			}
+		}
 
 		private void LateUpdate()
 		{

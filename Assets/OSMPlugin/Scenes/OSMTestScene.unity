@@ -445,6 +445,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 114720736608223668, guid: 3c0a9dbfa9b70e0469e93d0a07ac45b0,
         type: 2}
+      propertyPath: _zoomLevelUI
+      value: 
+      objectReference: {fileID: 1437620995}
+    - target: {fileID: 114720736608223668, guid: 3c0a9dbfa9b70e0469e93d0a07ac45b0,
+        type: 2}
       propertyPath: _map
       value: 
       objectReference: {fileID: 158007833}
@@ -531,6 +536,12 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1437620995 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 114127822810954584, guid: 8f299c0d176789b4db240ab0ec14f8fb,
+    type: 2}
+  m_PrefabInternal: {fileID: 1914718542}
+  m_Script: {fileID: 708705254, guid: f70555f144d8491a825f0804e09c671c, type: 3}
 --- !u!1001 &1914718542
 Prefab:
   m_ObjectHideFlags: 0
