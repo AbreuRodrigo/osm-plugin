@@ -609,13 +609,10 @@ namespace OSM
 			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.TileData.index, _currentZoomLevel, otherLayerCenterTile.TileData.x * 2, otherLayerCenterTile.TileData.y * 2);
 			_centerTileData = currentLayerCenterTile.TileData;
 
-			Tile tile = null;
 			int x = 0, y = 0;
 
-			for (int i = 0; i < CurrentLayer.Tiles.Count; i++)
+			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				tile = CurrentLayer.Tiles[i];
-
 				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
 				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
 
@@ -653,17 +650,14 @@ namespace OSM
 			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.Index, _currentZoomLevel, otherLayerCenterTile.TileData.x / 2, otherLayerCenterTile.TileData.y / 2);
 			_centerTileData = currentLayerCenterTile.TileData;
 
-			Tile tile = null;
 			int x = 0, y = 0;
 
-			for (int i = 0; i < CurrentLayer.Tiles.Count; i++)
+			foreach(Tile tile in CurrentLayer.Tiles)
 			{
-				tile = CurrentLayer.Tiles[i];
-
 				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_HALF_SIZE_IN_UNITS);
 				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_HALF_SIZE_IN_UNITS);
 
-				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y - y);
 
 				DoTileDownload(tile.TileData);
 			}
