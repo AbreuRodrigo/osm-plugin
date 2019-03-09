@@ -8,6 +8,10 @@ namespace OSM
 		[SerializeField]
 		private bool _useInertia;
 		[SerializeField]
+		private bool _userVerticalMoving;
+		[SerializeField]
+		private bool _userHorizontalMoving;
+		[SerializeField]
 		private float _inertiaDuration = 1;
 		[SerializeField]
 		private float _inertiaSpeedMultiplier = 0.1f;
@@ -50,8 +54,17 @@ namespace OSM
 				StopInertia();
 
 				_isPressed = true;
-				_helperVector.x = -Input.mousePosition.x;
-				_helperVector.y = -Input.mousePosition.y;
+
+				if (_userHorizontalMoving == true)
+				{
+					_helperVector.x = -Input.mousePosition.x;
+				}
+
+				if (_userVerticalMoving == true)
+				{
+					_helperVector.y = -Input.mousePosition.y;
+				}
+
 				_helperVector.z = _mainCamera.transform.position.z;
 
 				_clickDistance = _mainCamera.ScreenToWorldPoint(_helperVector) - _map.transform.position;								
@@ -61,8 +74,16 @@ namespace OSM
 			{
 				_isPressed = false;
 
-				_helperVector.x = -Input.mousePosition.x;
-				_helperVector.y = -Input.mousePosition.y;
+				if (_userHorizontalMoving == true)
+				{
+					_helperVector.x = -Input.mousePosition.x;
+				}
+
+				if (_userVerticalMoving == true)
+				{
+					_helperVector.y = -Input.mousePosition.y;
+				}
+
 				_helperVector.z = _mainCamera.transform.position.z;
 				_releasePoint = _mainCamera.ScreenToWorldPoint(_helperVector);
 
@@ -75,8 +96,16 @@ namespace OSM
 			{
 				_map.CheckCurrentLayerWithinScreenLimits();
 
-				_helperVector.x = -Input.mousePosition.x;
-				_helperVector.y = -Input.mousePosition.y;
+				if (_userHorizontalMoving == true)
+				{
+					_helperVector.x = -Input.mousePosition.x;
+				}
+
+				if (_userVerticalMoving == true)
+				{
+					_helperVector.y = -Input.mousePosition.y;
+				}
+
 				_helperVector.z = _mainCamera.transform.position.z;
 				_lastPointBeforeReleasing = _mainCamera.ScreenToWorldPoint(_helperVector);
 				_map.transform.position = _lastPointBeforeReleasing - _clickDistance;

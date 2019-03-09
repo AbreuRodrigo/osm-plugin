@@ -24,9 +24,8 @@ namespace OSM
 					_map.PrepareZoomIn(_zoomSpeed, FinishZooming);
 				}
 				else if (Input.mouseScrollDelta.y == -1)
-				{
-					FinishZooming();
-					//_map.PrepareZoomOut(_zoomSpeed, FinishZooming);
+				{					
+					_map.PrepareZoomOut(_zoomSpeed, FinishZooming);
 				}
 			}
 #endif

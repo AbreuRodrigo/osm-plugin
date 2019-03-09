@@ -16,6 +16,7 @@ namespace OSM
 		public const int TILE_SIZE_IN_PIXELS = 256;
 		public const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
 		public const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
+		public const float TILE_QUARTER_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.0025f;
 		public const string LAYER_BASE_NAME = "Layer";
 
 		[Header("Layer Properties")]
@@ -82,7 +83,7 @@ namespace OSM
 
 		private bool _isScaling;
 
-		private Vector3 _mapDeviationCorrection;
+		public Vector3 _mapDeviationCorrection;
 
 		private void Start()
 		{
@@ -112,7 +113,7 @@ namespace OSM
 
 				if (Input.GetKeyDown(KeyCode.Space))
 				{
-					ReferenceTilesBetweenLayers();
+					ReferenceTilesBetweenLayersOnZoomIn();
 				}
 			}
 		}
@@ -170,7 +171,7 @@ namespace OSM
 			}
 		}
 
-		private Tile GetCenterTileOnCurrentLayer()
+		private Tile GetCenterTileOnCurrentLayer(bool pUseExactCenter)
 		{
 			Tile centerTile = null;
 
@@ -178,10 +179,22 @@ namespace OSM
 			{
 				if (CheckTileOnScreen(tile.transform.position))
 				{
-					if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS >= 0 &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS <= 0)
+					if (pUseExactCenter == true)
 					{
-						return tile;
+						if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS <= 0)
+						{
+							return tile;
+						}
+					}
+					else
+					{
+						if (tile.X % 2 == 0 && tile.Y % 2 == 0 &&
+							tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+						{
+							return tile;
+						}
 					}
 				}
 			}
@@ -189,7 +202,7 @@ namespace OSM
 			return centerTile;
 		}
 
-		private Tile GetCenterTileOnOtherLayer()
+		private Tile GetCenterTileOnOtherLayer(bool pUseExactCenter)
 		{
 			Tile centerTile = null;
 
@@ -197,10 +210,22 @@ namespace OSM
 			{
 				if (CheckTileOnScreen(tile.transform.position))
 				{
-					if (tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
-						tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+					if (pUseExactCenter == true)
 					{
-						return tile;
+						if (tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+						{
+							return tile;
+						}
+					}
+					else
+					{
+						if (tile.X % 2 == 0 && tile.Y % 2 == 0 &&
+							tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+						{
+							return tile;
+						}
 					}
 				}
 			}
@@ -295,7 +320,6 @@ namespace OSM
 			if (_currentZoomLevel > MIN_ZOOM_LEVEL)
 			{
 				NextZoomLevel--;
-
 			}
 			else
 			{
@@ -366,9 +390,7 @@ namespace OSM
 
 				SwapLayers();
 
-				ReferenceTilesBetweenLayers();
-
-				//ValidateOnScreenTiles();
+				ReferenceTilesBetweenLayersOnZoomIn();
 
 				transform.position = _mapDeviationCorrection;
 
@@ -387,9 +409,9 @@ namespace OSM
 			OtherLayer.transform.position = Vector3.zero;
 			CurrentLayer.transform.SetParent(_layerContainer.transform);
 
-			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, 0.25f, TweenType.Linear, true, null, () =>
+			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, 0.5f, TweenType.BackOut, true, null, () => 
 			{
-				CurrentLayer.FadeOut(1, () =>
+				CurrentLayer.FadeOut(0.75f, () =>
 				{
 					OtherLayer.transform.SetParent(transform);
 					OtherLayer.transform.localScale = Vector3.one;
@@ -397,17 +419,14 @@ namespace OSM
 				});
 
 				transform.position = Vector3.zero;
-
 				OtherLayer.transform.position = Vector3.zero;
 				OtherLayer.OrganizeTilesAsGrid();
 
 				SwapLayers();
 
-				ReferenceTilesBetweenLayers();
+				ReferenceTilesBetweenLayersOnZoomOut();
 
-				ValidateOnScreenTiles();
-
-				//transform.position = new Vector3(-TILE_HALF_SIZE_IN_UNITS, TILE_HALF_SIZE_IN_UNITS, 0);
+				transform.position = _mapDeviationCorrection;
 
 				CalculateScreenBoundaries();
 			});
@@ -566,10 +585,10 @@ namespace OSM
 			}
 		}
 
-		private void ReferenceTilesBetweenLayers()
+		private void ReferenceTilesBetweenLayersOnZoomIn()
 		{
-			Tile otherLayerCenterTile = GetCenterTileOnOtherLayer();
-			Tile currentLayerCenterTile = GetCenterTileOnCurrentLayer();
+			Tile otherLayerCenterTile = GetCenterTileOnOtherLayer(true);
+			Tile currentLayerCenterTile = GetCenterTileOnCurrentLayer(true);
 
 			if (otherLayerCenterTile == null || currentLayerCenterTile == null)
 			{
@@ -591,13 +610,14 @@ namespace OSM
 			_centerTileData = currentLayerCenterTile.TileData;
 
 			Tile tile = null;
+			int x = 0, y = 0;
 
 			for (int i = 0; i < CurrentLayer.Tiles.Count; i++)
 			{
 				tile = CurrentLayer.Tiles[i];
 
-				int x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
-				int y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
@@ -605,6 +625,47 @@ namespace OSM
 				{
 					DoTileDownload(tile.TileData);
 				}
+			}
+		}
+
+		private void ReferenceTilesBetweenLayersOnZoomOut()
+		{
+			Tile otherLayerCenterTile = GetCenterTileOnOtherLayer(false);
+			Tile currentLayerCenterTile = GetCenterTileOnCurrentLayer(true);
+									
+			if (otherLayerCenterTile == null || currentLayerCenterTile == null)
+			{
+				return;
+			}
+
+			Vector3 topLeftOtherTile = otherLayerCenterTile.transform.position;
+									
+			topLeftOtherTile.x -= TILE_QUARTER_SIZE_IN_UNITS;
+			topLeftOtherTile.y += TILE_QUARTER_SIZE_IN_UNITS;
+
+			Vector3 topLeftCurrentTile = currentLayerCenterTile.transform.position;
+			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
+
+			_mapDeviationCorrection.x = (topLeftOtherTile.x - topLeftCurrentTile.x) * 0.5f - TILE_QUARTER_SIZE_IN_UNITS;
+			_mapDeviationCorrection.y = (topLeftOtherTile.y - topLeftCurrentTile.y) * 0.5f + TILE_QUARTER_SIZE_IN_UNITS;
+
+			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.Index, _currentZoomLevel, otherLayerCenterTile.TileData.x / 2, otherLayerCenterTile.TileData.y / 2);
+			_centerTileData = currentLayerCenterTile.TileData;
+
+			Tile tile = null;
+			int x = 0, y = 0;
+
+			for (int i = 0; i < CurrentLayer.Tiles.Count; i++)
+			{
+				tile = CurrentLayer.Tiles[i];
+
+				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_HALF_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_HALF_SIZE_IN_UNITS);
+
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+
+				DoTileDownload(tile.TileData);
 			}
 		}
 
