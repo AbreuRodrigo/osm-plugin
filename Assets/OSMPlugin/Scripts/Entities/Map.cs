@@ -424,11 +424,11 @@ namespace OSM
 
 				SwapLayers();
 
+				CurrentLayer.OrganizeTilesAsGrid();
+
 				ReferenceTilesBetweenLayersOnZoomOut();
 
-				transform.position = _mapDeviationCorrection;
-
-				ForcePrepareTilesForDownload();
+				transform.position = _mapDeviationCorrection;								
 
 				CalculateScreenBoundaries();				
 			});
@@ -631,23 +631,23 @@ namespace OSM
 		{
 			Tile otherLayerCenterTile = GetCenterTileOnOtherLayer(false);
 			Tile currentLayerCenterTile = GetCenterTileOnCurrentLayer(true);
-									
+
 			if (otherLayerCenterTile == null || currentLayerCenterTile == null)
 			{
 				return;
 			}
 
 			Vector3 topLeftOtherTile = otherLayerCenterTile.transform.position;
-									
 			topLeftOtherTile.x -= TILE_QUARTER_SIZE_IN_UNITS;
 			topLeftOtherTile.y += TILE_QUARTER_SIZE_IN_UNITS;
+			topLeftOtherTile *= -1;
 
 			Vector3 topLeftCurrentTile = currentLayerCenterTile.transform.position;
 			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
-			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
-
-			_mapDeviationCorrection.x = (topLeftOtherTile.x - topLeftCurrentTile.x) * 0.5f - TILE_QUARTER_SIZE_IN_UNITS;
-			_mapDeviationCorrection.y = (topLeftOtherTile.y - topLeftCurrentTile.y) * 0.5f + TILE_QUARTER_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;						
+						
+			_mapDeviationCorrection.x = transform.position.x - (topLeftOtherTile.x + topLeftCurrentTile.x);
+			_mapDeviationCorrection.y = transform.position.y - (topLeftOtherTile.y + topLeftCurrentTile.y);
 
 			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.Index, _currentZoomLevel, otherLayerCenterTile.TileData.x / 2, otherLayerCenterTile.TileData.y / 2);
 			_centerTileData = currentLayerCenterTile.TileData;
@@ -656,12 +656,15 @@ namespace OSM
 
 			foreach(Tile tile in CurrentLayer.Tiles)
 			{
-				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_HALF_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_HALF_SIZE_IN_UNITS);
+				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
 
-				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y - y);
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
-				DoTileDownload(tile.TileData);
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					DoTileDownload(tile.TileData);
+				}
 			}
 		}
 
