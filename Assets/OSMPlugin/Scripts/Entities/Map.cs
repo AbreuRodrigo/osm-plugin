@@ -428,7 +428,9 @@ namespace OSM
 
 				transform.position = _mapDeviationCorrection;
 
-				CalculateScreenBoundaries();
+				ForcePrepareTilesForDownload();
+
+				CalculateScreenBoundaries();				
 			});
 		}
 

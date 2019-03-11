@@ -162,11 +162,6 @@ Prefab:
       propertyPath: _mainCamera
       value: 
       objectReference: {fileID: 346407358}
-    - target: {fileID: 114203708917772766, guid: ef26f8afe7e4bcf49893bae7bd6b2f35,
-        type: 2}
-      propertyPath: _userHorizontalMoving
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef26f8afe7e4bcf49893bae7bd6b2f35, type: 2}
   m_IsPrefabAsset: 0

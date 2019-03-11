@@ -52,6 +52,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _useInertia: 1
+  _userVerticalMoving: 1
+  _userHorizontalMoving: 1
   _inertiaDuration: 2
   _inertiaSpeedMultiplier: 0.25
   _inertiaSpeedMultiplierMobile: 1.25
