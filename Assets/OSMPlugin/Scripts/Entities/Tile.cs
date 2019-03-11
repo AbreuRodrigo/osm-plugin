@@ -2,7 +2,7 @@
 
 namespace OSM
 {
-	public class Tile : MonoBehaviour, IDownloadable
+	public class Tile : MonoBehaviour
 	{
 		private const string IN_SCREEN_SHADER = "Sprites/Default";
 		private const string OUT_SCREEN_SHADER = "TSG/OSM/GaussianBlur";
@@ -20,11 +20,6 @@ namespace OSM
 			get { return _tileData.index; }
 			set
 			{
-				if (_tileData.index != value)
-				{
-					//Debug.Log("Tile Name: " + Name + " Was: " + _tileData.index + " Will be: " + value);
-				}
-
 				_tileData.index = value;
 			}
 		}
@@ -167,14 +162,20 @@ namespace OSM
 			}					
 		}
 
-		public void OnEnterScreen()
+		public void Blur()
 		{
-			Debug.Log("Enter Screen");
+			if(_meshRenderer != null && _meshRenderer.material != null)
+			{
+				_meshRenderer.material.shader = Shader.Find(OUT_SCREEN_SHADER);
+			}
 		}
 
-		public void OnExitScreen()
+		public void Focus()
 		{
-			Debug.Log("Exit Screen");
+			if (_meshRenderer != null && _meshRenderer.material != null)
+			{
+				_meshRenderer.material.shader = Shader.Find(IN_SCREEN_SHADER);
+			}
 		}
 	}
 }

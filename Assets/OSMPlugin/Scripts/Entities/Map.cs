@@ -439,18 +439,6 @@ namespace OSM
 			_currentZoomLevel = NextZoomLevel;
 		}
 
-		private void DoZoomDisplacement(Layer pLayer, int pDuration = 0)
-		{
-			if (_previousZoomLevel != _currentZoomLevel)
-			{
-				Vector3 dest = pLayer.transform.position + (_previousZoomLevel > _currentZoomLevel ? _displacementLevel : -_displacementLevel);
-
-				_previousZoomLevel = _currentZoomLevel;
-
-				TweenManager.Instance.SlideTo(pLayer.gameObject, dest, pDuration);
-			}
-		}
-
 		public void SetMovingLeft()
 		{
 			_isMovingLeft = true;
@@ -488,11 +476,6 @@ namespace OSM
 			_isStopped = true;
 		}
 
-		private void ScaleTo(GameObject pTarget, Vector3 pEnd, float pDuration)
-		{
-			TweenManager.Instance.ScaleTo(pTarget, pEnd, pDuration);
-		}
-
 		private void DefineCenterTileOnCurrentLayer()
 		{
 			CurrentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
@@ -501,8 +484,6 @@ namespace OSM
 
 		private void PrepareTileDataDownload(Tile tile)
 		{
-			//tile.ClearTexture();
-
 			int distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
 			int distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
 
