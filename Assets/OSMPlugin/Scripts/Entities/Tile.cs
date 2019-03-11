@@ -4,6 +4,9 @@ namespace OSM
 {
 	public class Tile : MonoBehaviour, IDownloadable
 	{
+		private const string IN_SCREEN_SHADER = "Sprites/Default";
+		private const string OUT_SCREEN_SHADER = "TSG/OSM/GaussianBlur";
+
 		[SerializeField]
 		private TileData _tileData;
 		[SerializeField]
@@ -96,7 +99,7 @@ namespace OSM
 			if (_meshRenderer == null)
 			{
 				_meshRenderer = GetComponent<MeshRenderer>();
-				_meshRenderer.material = new Material(Shader.Find("Sprites/Default"));
+				_meshRenderer.material = new Material(Shader.Find(IN_SCREEN_SHADER));
 			}
 		}
 

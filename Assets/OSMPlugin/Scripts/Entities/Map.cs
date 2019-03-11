@@ -58,6 +58,8 @@ namespace OSM
 
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
+		private float _fadingDurationForLayers = 0.5f;
+		private float _scalingDurationForLayers = 0.5f;
 
 		public int _tileCycleLimit;
 
@@ -375,9 +377,9 @@ namespace OSM
 			OtherLayer.transform.position = Vector3.zero;
 			CurrentLayer.transform.SetParent(_layerContainer.transform);
 
-			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, 0.5f, TweenType.BackOut, true, null, () =>
+			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () =>
 			{
-				CurrentLayer.FadeOut(0.75f, () =>
+				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
 					OtherLayer.transform.SetParent(transform);
 					OtherLayer.transform.localScale = Vector3.one;
@@ -409,9 +411,9 @@ namespace OSM
 			OtherLayer.transform.position = Vector3.zero;
 			CurrentLayer.transform.SetParent(_layerContainer.transform);
 
-			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, 0.5f, TweenType.BackOut, true, null, () => 
+			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () => 
 			{
-				CurrentLayer.FadeOut(0.75f, () =>
+				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
 					OtherLayer.transform.SetParent(transform);
 					OtherLayer.transform.localScale = Vector3.one;
@@ -423,8 +425,6 @@ namespace OSM
 				OtherLayer.OrganizeTilesAsGrid();
 
 				SwapLayers();
-
-				CurrentLayer.OrganizeTilesAsGrid();
 
 				ReferenceTilesBetweenLayersOnZoomOut();
 

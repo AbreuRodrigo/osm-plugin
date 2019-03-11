@@ -1,4 +1,4 @@
-﻿Shader "Custom/GaussianBlur"
+﻿Shader "TSG/OSM/GaussianBlur"
 {
 	Properties
 	{
