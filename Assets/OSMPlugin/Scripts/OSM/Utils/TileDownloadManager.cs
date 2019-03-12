@@ -8,7 +8,7 @@ namespace OSM
 {
 	public class TileDownloadManager : MonoBehaviour
 	{
-		private const string MAP_TILE_BASE_URI = "http://a.tile.openstreetmap.org/";
+		private const string MAP_TILE_BASE_URI = "http://c.tile.openstreetmap.org/";
 
 		[SerializeField]
 		private bool _cacheAllTexturesAfterDownloading;

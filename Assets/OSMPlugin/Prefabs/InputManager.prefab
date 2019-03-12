@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications: []
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 1812735496286818}
+  m_IsPrefabAsset: 1
+--- !u!1 &1812735496286818
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4871199335746068}
+  - component: {fileID: 114882438589676624}
+  - component: {fileID: 114468422027866588}
+  m_Layer: 0
+  m_Name: InputManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4871199335746068
+Transform:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1812735496286818}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &114468422027866588
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1812735496286818}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46bbde254339fda48923fd4c3c296a11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _timeUntilTapBecomesHold: 1
+  _distanceFromTouchPosToBeADrag: 50
+  _pinchMagnitudeMinimum: 7
+  _minPinchDot: 0.95
+  _twoFingerVeritcalSwipeMagnitudeMinimum: 5
+  _twoFingerXPositionLeeway: 10
+  _twoFingerYPositionLeeway: 30
+  _minTwoFingerVerticalSwipeDot: 0.998
+  _minTurnAngle: 6
+  _maxTwistDot: 0.95
+  _inTwistStateZoomMagnitudeMinimum: 5
+  _inTwistDragMagnitudeMinimum: 40
+--- !u!114 &114882438589676624
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1812735496286818}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 597190354de483a41af2a87acb9c06d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _isUsingKeyboardAndMouse: 0

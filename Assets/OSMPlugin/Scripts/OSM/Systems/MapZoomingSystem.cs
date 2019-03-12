@@ -2,7 +2,7 @@
 
 namespace OSM
 {
-	public class MapZoomingSystem : MonoBehaviour
+	public class MapZoomingSystem : MonoBehaviourSingleton<MapZoomingSystem>
 	{
 		[SerializeField]
 		private Map _map;
@@ -27,6 +27,17 @@ namespace OSM
 				{					
 					_map.PrepareZoomOut(_zoomSpeed, FinishZooming);
 				}
+			}
+#endif
+#if UNITY_ANDROID || UNITY_IOS
+
+			if(Input.touchCount == 1)
+			{
+				//MonoTouch
+			}
+			else if(Input.touchCount == 2)
+			{
+				//DualTouch
 			}
 #endif
 		}

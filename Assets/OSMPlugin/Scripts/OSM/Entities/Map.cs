@@ -100,26 +100,6 @@ namespace OSM
 			DebugManager.Instance.CreateDebugFeatures();
 		}
 
-		private void Update()
-		{
-			if (_isScaling == false)
-			{
-				if (Input.GetKeyDown(KeyCode.S))
-				{
-					ZoomIn();
-				}
-				if (Input.GetKeyDown(KeyCode.Z))
-				{
-					ZoomOut();
-				}
-
-				if (Input.GetKeyDown(KeyCode.Space))
-				{
-					ReferenceTilesBetweenLayersOnZoomIn();
-				}
-			}
-		}
-
 		private void LateUpdate()
 		{
 			if (_tileValidationCounter >= _tileValidationSeconds)

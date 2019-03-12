@@ -2,7 +2,7 @@
 
 namespace OSM
 {
-	public class MapMovementSystem : MonoBehaviour
+	public class MapMovementSystem : MonoBehaviourSingleton<MapMovementSystem>
 	{
 		[Header("Inertia Settings")]
 		[SerializeField]
