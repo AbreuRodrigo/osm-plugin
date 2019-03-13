@@ -59,7 +59,7 @@ namespace OSM
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 		private float _fadingDurationForLayers = 0.5f;
-		private float _scalingDurationForLayers = 0.5f;
+		private float _scalingDurationForLayers = 0.125f;
 
 		public int _tileCycleLimit;
 
@@ -290,6 +290,8 @@ namespace OSM
 			if (_currentZoomLevel < MAX_ZOOM_LEVEL)
 			{
 				NextZoomLevel++;
+				//ExecuteZooming(1);
+				//pOnComplete?.Invoke();
 			}
 			else
 			{
@@ -302,6 +304,8 @@ namespace OSM
 			if (_currentZoomLevel > MIN_ZOOM_LEVEL)
 			{
 				NextZoomLevel--;
+				//ExecuteZooming(-1);
+				//pOnComplete?.Invoke();
 			}
 			else
 			{
@@ -350,24 +354,21 @@ namespace OSM
 		{
 			OtherLayer.FadeOut(0);
 
-			ReferenceLayers();
-
-			_layerContainer.transform.localScale = Vector3.one;
-
-			OtherLayer.transform.position = Vector3.zero;
-			CurrentLayer.transform.SetParent(_layerContainer.transform);
+			StartReferencingLayers();
+			ResetLayerContainerPosition();
+			ResetOtherLayerPosition();
+			MoveCurrentLayerToContainer();
 
 			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () =>
 			{
 				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
-					OtherLayer.transform.SetParent(transform);
-					OtherLayer.transform.localScale = Vector3.one;
-					OtherLayer.transform.position = CurrentLayer.transform.position;
+					MoveOtherLayerToMap();
+					ResetOtherLayerScale();
 				});
 
-				transform.position = Vector3.zero;
-				OtherLayer.transform.position = Vector3.zero;
+				ResetMapPosition();
+				ResetOtherLayerPosition();
 				OtherLayer.OrganizeTilesAsGrid();
 
 				SwapLayers();
@@ -384,31 +385,28 @@ namespace OSM
 		{
 			OtherLayer.FadeOut(0);
 
-			ReferenceLayers();
-
-			_layerContainer.transform.localScale = Vector3.one;
-
-			OtherLayer.transform.position = Vector3.zero;
-			CurrentLayer.transform.SetParent(_layerContainer.transform);
+			StartReferencingLayers();
+			ResetLayerContainerPosition();
+			ResetOtherLayerPosition();
+			MoveCurrentLayerToContainer();
 
 			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () => 
 			{
 				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
-					OtherLayer.transform.SetParent(transform);
-					OtherLayer.transform.localScale = Vector3.one;
-					OtherLayer.transform.position = CurrentLayer.transform.position;
+					MoveOtherLayerToMap();
+					ResetOtherLayerScale();
 				});
 
-				transform.position = Vector3.zero;
-				OtherLayer.transform.position = Vector3.zero;
+				ResetMapPosition();
+				ResetOtherLayerPosition();
 				OtherLayer.OrganizeTilesAsGrid();
 
 				SwapLayers();
 
 				ReferenceTilesBetweenLayersOnZoomOut();
 
-				transform.position = _mapDeviationCorrection;								
+				transform.position = _mapDeviationCorrection;
 
 				CalculateScreenBoundaries();				
 			});
@@ -629,7 +627,7 @@ namespace OSM
 			}
 		}
 
-		public void ReferenceLayers()
+		public void StartReferencingLayers()
 		{
 			int total = OtherLayer.Tiles.Count;
 
@@ -728,6 +726,98 @@ namespace OSM
 					tile.transform.localPosition += _helperVector3;
 					PrepareTileDataDownload(tile);
 				}
+			}
+		}
+
+
+
+		public void ResetLayerContainerPosition()
+		{
+			if (_layerContainer != null)
+			{
+				_layerContainer.transform.localScale = Vector3.one;
+			}
+		}
+
+		public void ResetOtherLayerPosition()
+		{
+			if(OtherLayer != null)
+			{
+				OtherLayer.transform.position = Vector3.zero;
+			}			
+		}
+
+		public void ResetOtherLayerScale()
+		{
+			if (OtherLayer != null)
+			{
+				OtherLayer.transform.localScale = Vector3.one;
+			}
+		}
+
+		public void ResetMapPosition()
+		{
+			transform.position = Vector3.zero;
+		}
+
+		public void MoveCurrentLayerToContainer()
+		{
+			if(CurrentLayer != null && _layerContainer != null)
+			{
+				CurrentLayer.transform.SetParent(_layerContainer.transform);
+			}			
+		}
+
+		public void MoveCurrentLayerToMap()
+		{
+			if (CurrentLayer != null)
+			{
+				CurrentLayer.transform.SetParent(transform);
+			}
+		}
+
+		public void MoveOtherLayerToContainer()
+		{
+			if (OtherLayer != null && _layerContainer != null)
+			{
+				OtherLayer.transform.SetParent(_layerContainer.transform);
+			}
+		}
+
+		public void MoveOtherLayerToMap()
+		{
+			if (OtherLayer != null)
+			{
+				OtherLayer.transform.SetParent(transform);
+			}
+		}
+
+		/// <summary>
+		/// TEMP - LAYER CONTAINER STUFF 
+		/// </summary>
+
+		private float _layerContainerScale;
+		private Vector3 _initPosition;
+
+		public void StartLayerContainerScaling(Vector3 pInitPosition)
+		{
+			if (_layerContainer != null && _isScaling == false)
+			{
+				_initPosition = pInitPosition;
+				_isScaling = true;
+
+				DebugManager.Instance.InitializeDebugTouches(_initPosition);
+			}
+		}
+
+		public void StopLayerContainerScaling()
+		{
+			if (_layerContainer != null && _isScaling == true)
+			{
+				_isScaling = false;
+				_initPosition = Vector3.zero;
+
+				DebugManager.Instance.DisableDebugTouch();
 			}
 		}
 	}

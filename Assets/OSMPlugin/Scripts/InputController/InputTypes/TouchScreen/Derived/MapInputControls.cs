@@ -178,7 +178,6 @@ namespace InputControls {
             {
                 InvokeVerticalSwipeEventFromDerived(GetTilt());
             }
-
         }
 
         private IEnumerator SetTwoFingerStartState(Touch pTouchOne, Touch pTouchTwo)

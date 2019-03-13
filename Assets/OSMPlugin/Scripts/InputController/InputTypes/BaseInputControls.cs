@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+﻿using UnityEngine;
 
 namespace InputControls {
 
@@ -12,8 +9,8 @@ namespace InputControls {
     public delegate void OnTwoFingerVerticalSwipeHandler(float pValue);
     public delegate void OnHoldTapHandler();
 
-    public abstract class BaseInputControls : MonoBehaviour, IInput {
-
+    public abstract class BaseInputControls : MonoBehaviour, IInput
+	{
         [Header("Tap Settings")]
         [SerializeField]
         float _timeUntilTapBecomesHold = 1;
@@ -50,15 +47,18 @@ namespace InputControls {
         }
 
         #region Invoke Wrappers For Derived Class' Functions
-        protected void InvokePinchEventFromDerived(float pDistance) {
+        protected void InvokePinchEventFromDerived(float pDistance)
+		{
             OnPinchEvent?.Invoke(pDistance);
         }
 
-        protected void InvokeTwistEventFromDerived(float pRotation) {
+        protected void InvokeTwistEventFromDerived(float pRotation)
+		{
             OnTwistEvent?.Invoke(pRotation);
         }
 
-        protected void InvokeTapEventFromDerived(double pX, double pY) {
+        protected void InvokeTapEventFromDerived(double pX, double pY)
+		{
             OnTapEvent?.Invoke(pX, pY);
         }
 
@@ -77,7 +77,5 @@ namespace InputControls {
             OnTwoFingerVerticalSwipeEvent?.Invoke(pValue);
         }
         #endregion
-
-
     }
 }
