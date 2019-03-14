@@ -243,6 +243,10 @@ namespace OSM
 			_isZooming = false;
 		}
 
+		private float _initialMapZoom;
+		private int _initialDistance;
+		private bool _definedDistance;
+
 		private void ProcessMapZoom()
 		{
 #if UNITY_EDITOR
@@ -265,6 +269,8 @@ namespace OSM
 			{
 				StartZoom();
 
+				_initialMapZoom = _map.CurrentZoomLevel;
+
 				_map.MoveCurrentLayerToContainer();
 				_map.StartLayerContainerScaling(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
 			}
@@ -274,14 +280,25 @@ namespace OSM
 
 				_map.MoveCurrentLayerToMap();
 				_map.StopLayerContainerScaling();
+
+				_definedDistance = false;
 			}
 			else if(_isZooming == true)
 			{
 				DebugManager.Instance.UpdateDebugTouches(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
 
-				float distance = DebugManager.Instance.GetDisanceBetweenTouches();
+				int distance = DebugManager.Instance.GetDisanceBetweenTouches();
 
-				Debug.Log(distance);
+				if(_definedDistance == false)
+				{
+					_definedDistance = true;
+					_initialDistance = distance;
+				}
+
+				float diff = distance / _map.mapHorizontalLimitInUnits;
+
+				Vector3 scale = Vector3.one + new Vector3(diff, diff, 0);
+				_map.LayerContainer.localScale = scale;
 			}
 
 #endif

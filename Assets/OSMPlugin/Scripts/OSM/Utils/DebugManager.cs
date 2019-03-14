@@ -171,9 +171,9 @@ namespace OSM
 			}
 		}
 
-		public float GetDisanceBetweenTouches()
+		public int GetDisanceBetweenTouches()
 		{
-			return Vector3.Distance(_debugTouch1.transform.position, _debugTouch2.transform.position);
+			return (int) Vector3.Distance(_debugTouch1.transform.position, _debugTouch2.transform.position);
 		}
 
 		private void UpdateZoomLevel()

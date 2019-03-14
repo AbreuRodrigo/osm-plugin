@@ -7,6 +7,7 @@ namespace OSM
 {
 	public class Map : MonoBehaviour
 	{
+		#region Constants
 		public const string CURRENT_LAYER = "CurrentLayer";
 		public const string OTHER_LAYER = "OtherLayer";
 
@@ -18,6 +19,7 @@ namespace OSM
 		public const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
 		public const float TILE_QUARTER_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.0025f;
 		public const string LAYER_BASE_NAME = "Layer";
+		#endregion
 
 		[Header("Layer Properties")]
 		[SerializeField]
@@ -65,6 +67,9 @@ namespace OSM
 
 		public ScreenBoundaries _screenBoundaries;
 
+		public float mapVerticalLimitInUnits;
+		public float mapHorizontalLimitInUnits;
+
 		//Movement Detection
 		public bool _isMovingLeft;
 		public bool _isMovingRight;
@@ -82,6 +87,13 @@ namespace OSM
 
 		[SerializeField]
 		private GameObject _layerContainer;
+		public Transform LayerContainer
+		{
+			get
+			{
+				return _layerContainer.transform;
+			}
+		}
 
 		private bool _isScaling;
 
@@ -224,6 +236,9 @@ namespace OSM
 
 			_mapMinYByZoomLevel = _centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 			_mapMaxYByZoomLevel = (_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
+
+			mapVerticalLimitInUnits = (int)(_screenBoundaries.top * 2.0f);
+			mapHorizontalLimitInUnits = (int)(_screenBoundaries.right * 2.0f);
 		}
 
 		protected void ValidateOnScreenTiles()
