@@ -61,7 +61,7 @@ namespace OSM
 		private float _tileValidationSeconds = 1f;
 		private float _tileValidationCounter = 0;
 		private float _fadingDurationForLayers = 0.5f;
-		private float _scalingDurationForLayers = 0.125f;
+		private float _scalingDurationForLayers = 0.5f;
 
 		public int _tileCycleLimit;
 
@@ -85,6 +85,11 @@ namespace OSM
 		private Vector3 _displacementLevel;
 		private Vector3 _helperVector3;
 
+		private bool _onZoomTransition;
+		private float _zoomTransitionTimer;
+		private Action _onCompleteZoomInTransition;
+
+
 		[SerializeField]
 		private GameObject _layerContainer;
 		public Transform LayerContainer
@@ -94,8 +99,6 @@ namespace OSM
 				return _layerContainer.transform;
 			}
 		}
-
-		private bool _isScaling;
 
 		public Vector3 _mapDeviationCorrection;
 
@@ -121,6 +124,26 @@ namespace OSM
 			}
 
 			_tileValidationCounter += Time.deltaTime;
+
+			RunZoomInTransactionTimeLogic();
+		}
+
+		private void RunZoomInTransactionTimeLogic()
+		{
+			if (_onZoomTransition == true)
+			{
+				if (_zoomTransitionTimer > 0)
+				{
+					_zoomTransitionTimer -= Time.deltaTime;
+
+					if (_zoomTransitionTimer <= 0)
+					{
+						_zoomTransitionTimer = 0;
+						_onZoomTransition = false;
+						_onCompleteZoomInTransition?.Invoke();
+					}
+				}
+			}
 		}
 
 		private void InitializeMap()
@@ -300,34 +323,6 @@ namespace OSM
 			}
 		}
 
-		public void PrepareZoomIn(float pZoomDuration, Action pOnComplete)
-		{
-			if (_currentZoomLevel < MAX_ZOOM_LEVEL)
-			{
-				NextZoomLevel++;
-				//ExecuteZooming(1);
-				//pOnComplete?.Invoke();
-			}
-			else
-			{
-				pOnComplete?.Invoke();
-			}
-		}
-
-		public void PrepareZoomOut(float pZoomDuration, Action pOnComplete)
-		{
-			if (_currentZoomLevel > MIN_ZOOM_LEVEL)
-			{
-				NextZoomLevel--;
-				//ExecuteZooming(-1);
-				//pOnComplete?.Invoke();
-			}
-			else
-			{
-				pOnComplete?.Invoke();
-			}
-		}
-
 		public void InitialZoom()
 		{
 			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
@@ -346,7 +341,7 @@ namespace OSM
 			DownloadInitialTiles();
 		}
 
-		private void ExecuteZooming(int pZoomLevel = 0)
+		public void ExecuteZooming(int pZoomLevel = 0)
 		{
 			_currentZoomLevel += pZoomLevel;
 
@@ -392,9 +387,57 @@ namespace OSM
 
 				transform.position = _mapDeviationCorrection;
 
-				CalculateScreenBoundaries();
+				CalculateScreenBoundaries();					
 			});
 		}
+
+		#region TEMP
+		public void ExecuteZooming2(int pZoomLevel = 0)
+		{
+			_currentZoomLevel += pZoomLevel;
+
+			if (ValidateZoomLimits() == false)
+			{
+				return;
+			}
+
+			if (pZoomLevel > 0)
+			{
+				DoZoomIn2();
+			}
+			else if (pZoomLevel < 0)
+			{
+				DoZoomOut();
+			}
+		}
+
+		private void DoZoomIn2()
+		{			
+			OtherLayer.FadeOut(0);
+
+			StartReferencingLayers();
+			ResetLayerContainerPosition();
+			ResetOtherLayerPosition();
+			MoveCurrentLayerToContainer();
+
+			ResetMapPosition();
+			ResetOtherLayerPosition();
+			OtherLayer.OrganizeTilesAsGrid();
+
+			SwapLayers();
+
+			ReferenceTilesBetweenLayersOnZoomIn();
+
+			transform.position = _mapDeviationCorrection;
+
+			CalculateScreenBoundaries();
+
+			PrepareZoomInTransition(()=> {
+				MoveOtherLayerToMap();
+				ResetOtherLayerScale();
+			});
+		}
+		#endregion
 
 		private void DoZoomOut()
 		{
@@ -425,6 +468,13 @@ namespace OSM
 
 				CalculateScreenBoundaries();				
 			});
+		}
+
+		private void PrepareZoomInTransition(Action pOnComplete)
+		{
+			_onZoomTransition = true;
+			_zoomTransitionTimer = 1;
+			_onCompleteZoomInTransition = pOnComplete;
 		}
 
 		private void UpdateZoomLevel()
@@ -804,35 +854,6 @@ namespace OSM
 			if (OtherLayer != null)
 			{
 				OtherLayer.transform.SetParent(transform);
-			}
-		}
-
-		/// <summary>
-		/// TEMP - LAYER CONTAINER STUFF 
-		/// </summary>
-
-		private float _layerContainerScale;
-		private Vector3 _initPosition;
-
-		public void StartLayerContainerScaling(Vector3 pInitPosition)
-		{
-			if (_layerContainer != null && _isScaling == false)
-			{
-				_initPosition = pInitPosition;
-				_isScaling = true;
-
-				DebugManager.Instance.InitializeDebugTouches(_initPosition);
-			}
-		}
-
-		public void StopLayerContainerScaling()
-		{
-			if (_layerContainer != null && _isScaling == true)
-			{
-				_isScaling = false;
-				_initPosition = Vector3.zero;
-
-				DebugManager.Instance.DisableDebugTouch();
 			}
 		}
 	}

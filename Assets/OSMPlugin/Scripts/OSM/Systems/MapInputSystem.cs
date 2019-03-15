@@ -50,6 +50,8 @@ namespace OSM
 
 		private void Start()
 		{
+			Input.multiTouchEnabled = true;
+
 			if (Application.platform == RuntimePlatform.Android ||
 				Application.platform == RuntimePlatform.IPhonePlayer)
 			{
@@ -67,7 +69,7 @@ namespace OSM
 				UpdateInertiaOverMap();
 				UpdateMapPositioningSystem();
 				UpdateMapPositionLimits();
-			}
+			}						
 		}
 
 		private void UpdateMapPositioningSystem()
@@ -244,52 +246,44 @@ namespace OSM
 		}
 
 		private float _initialMapZoom;
-		private int _initialDistance;
+		private float _initialDistance;
 		private bool _definedDistance;
 
-		private void ProcessMapZoom()
+		private bool _pinchBegun;
+		private bool _pinchEnd;
+
+		private void ExecuteZoomProcedures()
 		{
-#if UNITY_EDITOR
-
-			/*if (_isZooming == false && Input.mouseScrollDelta.y != 0)
-			{
-				StartZoom();
-
-				if (Input.mouseScrollDelta.y == 1)
-				{
-					//_map.PrepareZoomIn(_zoomSpeed, FinishZooming);
-				}
-				else if (Input.mouseScrollDelta.y == -1)
-				{
-					//_map.PrepareZoomOut(_zoomSpeed, FinishZooming);
-				}
-			}*/
-
-			if(_isZooming == false && Input.GetKeyDown(KeyCode.LeftControl))
+			if (_isZooming == false && _pinchBegun)
 			{
 				StartZoom();
 
 				_initialMapZoom = _map.CurrentZoomLevel;
 
-				_map.MoveCurrentLayerToContainer();
-				_map.StartLayerContainerScaling(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
+				_map.MoveCurrentLayerToContainer();				
 			}
-			else if (_isZooming == true && Input.GetKeyUp(KeyCode.LeftControl))
+			else if (_isZooming == true && _pinchEnd)
 			{
 				EndZoom();
 
 				_map.MoveCurrentLayerToMap();
-				_map.StopLayerContainerScaling();
+				StopLayerContainerScaling();
 
 				_definedDistance = false;
+
+				if (_map.LayerContainer.localScale.x == 2)
+				{
+					_map.ExecuteZooming2(1);
+				}
+
+				_pinchBegun = false;
+				_pinchEnd = false;
 			}
-			else if(_isZooming == true)
-			{
-				DebugManager.Instance.UpdateDebugTouches(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
+			else if (_isZooming == true)
+			{				
+				float distance = DebugManager.Instance.GetDisanceBetweenTouches();
 
-				int distance = DebugManager.Instance.GetDisanceBetweenTouches();
-
-				if(_definedDistance == false)
+				if (_definedDistance == false)
 				{
 					_definedDistance = true;
 					_initialDistance = distance;
@@ -297,36 +291,106 @@ namespace OSM
 
 				float diff = distance / _map.mapHorizontalLimitInUnits;
 
-				Vector3 scale = Vector3.one + new Vector3(diff, diff, 0);
-				_map.LayerContainer.localScale = scale;
+				_map.LayerContainer.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 2, diff);
+			}
+		}
+
+		private void ProcessMapZoom()
+		{
+#if UNITY_EDITOR
+			if (Input.GetKeyDown(KeyCode.LeftControl))
+			{
+				_pinchBegun = true;
+				_pinchEnd = false;
+
+				StartLayerContainerScalingEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
+			}
+			else if(Input.GetKeyUp(KeyCode.LeftControl))
+			{
+				_pinchBegun = false;
+				_pinchEnd = true;
 			}
 
+			if(_isZooming == true)
+			{
+				DebugManager.Instance.UpdateDebugTouchesEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));				
+			}
 #endif
-
 #if !UNITY_EDITOR && UNITY_ANDROID
 
-			if (Input.touchCount == 2)
+			if(Input.touchCount > 0)
 			{
-				StartZoom();
+				Vector3 p1 = Vector3.zero, p2 = Vector3.zero;
 
-				Touch t1 = Input.GetTouch(0);
-				Touch t2 = Input.GetTouch(1);
+				if (Input.touchCount == 2)
+				{
+					Touch t1 = Input.GetTouch(0);
+					Touch t2 = Input.GetTouch(1);
+			
+					p1 = t1.position;
+					p2 = t2.position;
 
-				float d = Vector2.Distance(t2.position, t1.position);
+					float d = Vector3.Distance(p1, p2);
 
-				DebugManager.Instance.UpdatePinchLevel(d);
+					DebugManager.Instance.UpdatePinchLevel(d);
 
-				//Move Current to layer container
+					_pinchBegun = true;
+					_pinchEnd = false;
 
-				//Do scaling on the layerContainer
+					StartLayerContainerScalingMobile(p1, p2);
+				}
+				else if(_isZooming == true && Input.touchCount < 2)
+				{
+					EndZoom();
+
+					_pinchBegun = false;
+					_pinchEnd = true;
+				}
+
+				if(_isZooming == true)
+				{
+					DebugManager.Instance.UpdateDebugTouchesMobile(p1, p2);
+				}
 			}
-			else if(_isZooming == true && Input.touchCount < 2)
-			{
-				EndZoom();
-			}
+
 #endif
+
+			ExecuteZoomProcedures();
 		}
 
 		#endregion
+
+		/// <summary>
+		/// TEMP - LAYER CONTAINER STUFF 
+		/// </summary>
+
+		private bool _isScaling;
+
+		public void StartLayerContainerScalingEditor(Vector3 pInitPosition)
+		{
+			if (_isScaling == false)
+			{
+				_isScaling = true;
+				DebugManager.Instance.InitializeDebugTouchesEditor(pInitPosition);
+			}
+		}
+
+		public void StartLayerContainerScalingMobile(Vector3 pTouch1, Vector3 pTouch2)
+		{
+			if (_isScaling == false)
+			{
+				_isScaling = true;
+				DebugManager.Instance.InitializeDebugTouchesMobile(pTouch1, pTouch2);
+			}
+		}
+
+		public void StopLayerContainerScaling()
+		{
+			if ( _isScaling == true)
+			{
+				_isScaling = false;
+				DebugManager.Instance.DisableDebugTouch();
+			}
+		}
 	}
 }

@@ -84,6 +84,8 @@ namespace OSM
 							tile.transform.position.y + Map.TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - Map.TILE_HALF_SIZE_IN_UNITS < mp.y)
 						{
 							tile._meshRenderer.material.color = Color.green;
+
+							Debug.Log(OSMGeoHelper.TileToWorldPos(tile.TileData.x, tile.TileData.y, tile.TileData.zoom));
 						}
 						else
 						{
@@ -112,7 +114,7 @@ namespace OSM
 			}
 		}
 
-		public void InitializeDebugTouches(Vector3 pPosition)
+		public void InitializeDebugTouchesEditor(Vector3 pPosition)
 		{
 			_initialDebugPosition = pPosition;
 
@@ -142,7 +144,7 @@ namespace OSM
 			}
 		}
 
-		public void UpdateDebugTouches(Vector3 pPosition)
+		public void UpdateDebugTouchesEditor(Vector3 pPosition)
 		{
 			if (_debugTouch1 != null)
 			{
@@ -152,6 +154,52 @@ namespace OSM
 			if (_debugTouch2 != null)
 			{
 				_debugTouch2.transform.position = pPosition;
+			}
+		}
+
+		public void InitializeDebugTouchesMobile(Vector3 pTouch1, Vector3 pTouch2)
+		{
+			_initialDebugPosition = pTouch1 + (pTouch2 - pTouch1) * 0.5f; //A + (B - A) * percent
+
+			if (_debugTouch1 != null)
+			{
+				_debugTouch1.gameObject.SetActive(true);
+				_debugTouch1.transform.position = pTouch1;
+			}
+
+			if (_debugTouch2 != null)
+			{
+				_debugTouch2.gameObject.SetActive(true);
+				_debugTouch2.transform.position = pTouch2;
+			}
+
+			if (_debugMiddlePoint != null)
+			{
+				_debugMiddlePoint.gameObject.SetActive(true);
+				_debugMiddlePoint.transform.position = _initialDebugPosition;
+			}
+		}
+
+		public void UpdateDebugTouchesMobile(Vector3 pTouch1, Vector3 pTouch2)
+		{
+			if (_debugTouch1 != null)
+			{
+				if(_debugTouch1.gameObject.activeInHierarchy == false)
+				{
+					_debugTouch1.gameObject.SetActive(true);
+				}
+
+				_debugTouch1.transform.position = pTouch1;
+			}
+
+			if (_debugTouch2 != null)
+			{
+				if (_debugTouch2.gameObject.activeInHierarchy == false)
+				{
+					_debugTouch2.gameObject.SetActive(true);
+				}
+
+				_debugTouch2.transform.position = pTouch2;
 			}
 		}
 
@@ -171,9 +219,9 @@ namespace OSM
 			}
 		}
 
-		public int GetDisanceBetweenTouches()
+		public float GetDisanceBetweenTouches()
 		{
-			return (int) Vector3.Distance(_debugTouch1.transform.position, _debugTouch2.transform.position);
+			return Vector3.Distance(_debugTouch1.transform.position, _debugTouch2.transform.position);
 		}
 
 		private void UpdateZoomLevel()

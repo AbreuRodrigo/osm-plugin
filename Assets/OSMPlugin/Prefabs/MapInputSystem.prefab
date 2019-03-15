@@ -61,3 +61,4 @@ MonoBehaviour:
   _mainCamera: {fileID: 0}
   _zoomSpeed: 0
   _isZooming: 0
+  _zoomDebugTransition: 3
