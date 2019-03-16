@@ -144,7 +144,7 @@ MonoBehaviour:
   _zoomLevelUI: {fileID: 0}
   _pinchLevelUI: {fileID: 0}
   _debugScreenLimits: 1
-  _showDebugTargetTile: 0
+  _showDebugTargetTile: 1
   _updateZoomLevel: 1
   _updatePinchLevel: 1
   _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,

@@ -84,8 +84,6 @@ namespace OSM
 							tile.transform.position.y + Map.TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - Map.TILE_HALF_SIZE_IN_UNITS < mp.y)
 						{
 							tile._meshRenderer.material.color = Color.green;
-
-							Debug.Log(OSMGeoHelper.TileToWorldPos(tile.TileData.x, tile.TileData.y, tile.TileData.zoom));
 						}
 						else
 						{

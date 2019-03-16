@@ -177,6 +177,9 @@ public class OnlineMapsMarkerManager : OnlineMapsMarkerManagerBase<OnlineMapsMar
     {
         base.Update();
 
-        if (allowAddMarkerByM && Input.GetKeyUp(KeyCode.M)) CreateItem(OnlineMapsControlBase.instance.GetCoords());
+		if (allowAddMarkerByM && Input.GetKeyUp(KeyCode.M))
+		{
+			CreateItem(OnlineMapsControlBase.instance.GetCoords());
+		}
     }
 }

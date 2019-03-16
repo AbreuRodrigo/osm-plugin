@@ -143,17 +143,21 @@ public class OnlineMapsTileSetControl : OnlineMapsControlBaseDynamicMesh
         size.x = size.x / boundsSize.x;
         size.z = size.z / boundsSize.z;
 
-        Vector2 r = new Vector3(size.x - .5f, size.z - .5f);
+        Vector2 r = new Vector3(size.x - 0.5f, size.z - 0.5f);
 
         float zoomCoof = map.buffer.renderState.zoomCoof;
         int countX = map.buffer.renderState.width / OnlineMapsUtils.tileSize;
         int countY = map.buffer.renderState.height / OnlineMapsUtils.tileSize;
 
         double px, py;
-        map.GetTilePosition(out px, out py);
-        px += countX * r.x * zoomCoof;
+
+		map.GetTilePosition(out px, out py);
+
+		px += countX * r.x * zoomCoof;
         py -= countY * r.y * zoomCoof;
-        map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
+
+		map.projection.TileToCoordinates(px, py, map.zoom, out px, out py);
+
         return new Vector2((float) px, (float) py);
     }
 

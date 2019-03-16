@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace OSM
 {
@@ -27,10 +28,46 @@ namespace OSM
 			return coords;
 		}
 
+		public static void TileToWorldPos(double pTileX, double pTileY, int pZoom, out double pLatitude, out double pLongitude)
+		{
+			Coordinates coords;
+			double n = Math.PI - ((2.0 * Math.PI * pTileY) / Math.Pow(2.0, pZoom));
+
+			pLongitude = (float)((pTileX / Math.Pow(2.0, pZoom) * 360.0) - 180.0);
+			pLatitude = (float)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
+		}
+
 		public static TileData GetTileData(int pZoom, double pLatitude, double pLongitude)
 		{			
 			Point3 tilePoint = WorldToTilePos(pLatitude, pLongitude, pZoom);
 			return GetTileData(tilePoint.zoomLevel, tilePoint.x, tilePoint.y);
+		}
+
+		public static bool GetCoordsByWorldPosition(float pPointClickX, float pPointClickY, int pZoomLevel, Tile pTargetTile)
+		{
+			/*Vector3 boundsSize = new Vector3(sizeInScene.x, 0, sizeInScene.y);
+			boundsSize.Scale(transform.lossyScale);
+			Vector3 size = new Vector3(0, 0, sizeInScene.y * transform.lossyScale.z) - Quaternion.Inverse(transform.rotation) * (position - transform.position);
+
+			size.x = size.x / boundsSize.x;
+			size.z = size.z / boundsSize.z;
+
+			Vector2 r = new Vector3(size.x - 0.5f, size.z - 0.5f);
+
+			float zoomCoof = map.zoomCoof;
+			int countX = map.buffer.renderState.width / OnlineMapsUtils.tileSize;
+			int countY = map.buffer.renderState.height / OnlineMapsUtils.tileSize;
+
+			double px, py;
+
+			map.GetTilePosition(out px, out py);
+			px += countX * r.x * zoomCoof;
+			py -= countY * r.y * zoomCoof;
+			TileToWorldPos(px, py, map.zoom, out lng, out lat);*/
+
+
+
+			return true;
 		}
 
 		public static TileData GetTileData(int pZoom, int pX, int pY)

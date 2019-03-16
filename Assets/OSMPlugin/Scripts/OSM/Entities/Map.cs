@@ -126,6 +126,25 @@ namespace OSM
 			_tileValidationCounter += Time.deltaTime;
 
 			RunZoomInTransactionTimeLogic();
+						
+			Vector3 p = Vector3.zero;
+
+			if (Input.GetKeyDown(KeyCode.M))
+			{
+				p = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
+
+				Tile tile = GetTileByWorldPosition(p);
+
+				float tileXTopLeft = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS;
+				float tileYTopLeft = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS;
+
+				Vector3 v = p - new Vector3(tileXTopLeft, tileYTopLeft, 0);
+				v.y *= -1;
+
+				v /= TILE_SIZE_IN_UNITS;
+
+				Debug.Log(OSMGeoHelper.TileToWorldPos(tile.TileData.x + v.x, tile.TileData.y + v.y, tile.TileData.zoom));
+			}
 		}
 
 		private void RunZoomInTransactionTimeLogic()
@@ -794,7 +813,23 @@ namespace OSM
 			}
 		}
 
+		private Tile GetTileByWorldPosition(Vector3 pWorldPoint)
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.x &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.y)
+					{
+						tile._meshRenderer.material.color = Color.green;
+						return tile;
+					}
+				}
+			}
 
+			return null;
+		}
 
 		public void ResetLayerContainerPosition()
 		{
