@@ -143,7 +143,9 @@ namespace OSM
 
 				v /= TILE_SIZE_IN_UNITS;
 
-				Debug.Log(OSMGeoHelper.TileToWorldPos(tile.TileData.x + v.x, tile.TileData.y + v.y, tile.TileData.zoom));
+				Coordinates coords = OSMGeoHelper.TileToWorldPos(tile.TileData.x + v.x, tile.TileData.y + v.y, tile.TileData.zoom);
+
+				MarkerManager.Instance.CreateMarker(p, transform);
 			}
 		}
 
@@ -822,7 +824,6 @@ namespace OSM
 					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.x &&
 						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.y)
 					{
-						tile._meshRenderer.material.color = Color.green;
 						return tile;
 					}
 				}
