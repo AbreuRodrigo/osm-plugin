@@ -149,7 +149,6 @@ namespace OSM
 				Coordinates coords = OSMGeoHelper.TileToGeoPos(tile.TileData.x + positionInTile.x, tile.TileData.y + positionInTile.y, tile.TileData.zoom);
 
 				Marker marker = MarkerManager.Instance.CreateMarkerFallingDown(point);
-				marker.InitialPositionInTile = positionInTile;
 				marker.GeoCoordinates = coords;
 			}
 		}
@@ -881,6 +880,7 @@ namespace OSM
 			}
 		}
 
+		//TODO: Do no update everytime we move the map
 		private void UpdateMarkers()
 		{
 			foreach(Marker marker in MarkerManager.Instance.Markers)
