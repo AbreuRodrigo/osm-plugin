@@ -10,7 +10,7 @@ namespace OSM
 		#region Constants
 		public const string CURRENT_LAYER = "CurrentLayer";
 		public const string OTHER_LAYER = "OtherLayer";
-
+		
 		public const int MIN_ZOOM_LEVEL = 3;
 		public const int MAX_ZOOM_LEVEL = 19;
 
@@ -53,6 +53,8 @@ namespace OSM
 
 		public Layer CurrentLayer { get; private set; }
 		public Layer OtherLayer { get; private set; }
+
+		private GameObject markersLayer;
 
 		public int NextZoomLevel { get; set; }
 
@@ -107,6 +109,7 @@ namespace OSM
 			StopMovements();
 			InitializeMap();
 			InitializeLayers();
+			InitializeMarkersContainer();
 			InitialZoom();
 
 			CalculateScreenBoundaries();
@@ -127,25 +130,27 @@ namespace OSM
 
 			RunZoomInTransactionTimeLogic();
 						
-			Vector3 p = Vector3.zero;
+			Vector3 point = Vector3.zero;
 
 			if (Input.GetKeyDown(KeyCode.M))
 			{
-				p = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
+				point = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
 
-				Tile tile = GetTileByWorldPosition(p);
+				Tile tile = GetTileByVectorPoint(point);
 
 				float tileXTopLeft = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS;
 				float tileYTopLeft = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS;
 
-				Vector3 v = p - new Vector3(tileXTopLeft, tileYTopLeft, 0);
-				v.y *= -1;
+				Vector3 positionInTile = point - new Vector3(tileXTopLeft, tileYTopLeft, 0);
+				positionInTile.y *= -1;
 
-				v /= TILE_SIZE_IN_UNITS;
+				positionInTile /= TILE_SIZE_IN_UNITS;
 
-				Coordinates coords = OSMGeoHelper.TileToWorldPos(tile.TileData.x + v.x, tile.TileData.y + v.y, tile.TileData.zoom);
+				Coordinates coords = OSMGeoHelper.TileToGeoPos(tile.TileData.x + positionInTile.x, tile.TileData.y + positionInTile.y, tile.TileData.zoom);
 
-				MarkerManager.Instance.CreateMarker(p, transform);
+				Marker marker = MarkerManager.Instance.CreateMarkerFallingDown(point);
+				marker.InitialPositionInTile = positionInTile;
+				marker.GeoCoordinates = coords;
 			}
 		}
 
@@ -207,6 +212,12 @@ namespace OSM
 
 				layerIndex++;
 			}
+		}
+
+		private void InitializeMarkersContainer()
+		{
+			markersLayer = MarkerManager.Instance.CreateMarkersLayer();
+			markersLayer.transform.SetParent(transform);
 		}
 
 		private Tile GetCenterTileOnCurrentLayer(bool pUseExactCenter)
@@ -767,6 +778,8 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}			
 			}
+
+			UpdateMarkers();
 		}
 
 		private void CheckInsideScreenInitially()
@@ -815,14 +828,14 @@ namespace OSM
 			}
 		}
 
-		private Tile GetTileByWorldPosition(Vector3 pWorldPoint)
+		private Tile GetTileByVectorPoint(Vector3 pPoint)
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
 				if (CheckTileOnScreen(tile.transform.position))
 				{
-					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.x &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > pWorldPoint.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < pWorldPoint.y)
+					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > pPoint.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < pPoint.x &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > pPoint.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < pPoint.y)
 					{
 						return tile;
 					}
@@ -830,6 +843,66 @@ namespace OSM
 			}
 
 			return null;
+		}
+
+		private Tile GetTileByPoint3(int x, int y)
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				if (tile.TileData.x == x && tile.TileData.x == x &&
+					tile.TileData.y == y && tile.TileData.y == y)
+				{
+					return tile;
+				}
+			}
+
+			return null;
+		}
+
+		//TODO: Refactor later to remove instantiations
+		private void SpawnMarker(double pLatitude, double pLongitude)
+		{			
+			Point3Double tileP = OSMGeoHelper.GeoToTilePosDouble(pLatitude, pLongitude, _currentZoomLevel);
+
+			int z = tileP.zoomLevel;
+			int x = (int)tileP.x;
+			int y = (int)tileP.y;
+
+			Vector3 insideTile = new Vector3((float)tileP.x - x, (float)tileP.y - y);
+
+			Tile tile = GetTileByPoint3(x, y);
+
+			if (tile != null)
+			{
+				insideTile = new Vector3(tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS + TILE_SIZE_IN_UNITS * insideTile.x,
+													 tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS - TILE_SIZE_IN_UNITS * insideTile.y, 0);
+
+				Marker mark = MarkerManager.Instance.CreateMarker(insideTile);
+			}
+		}
+
+		private void UpdateMarkers()
+		{
+			foreach(Marker marker in MarkerManager.Instance.Markers)
+			{
+				Point3Double tileP = OSMGeoHelper.GeoToTilePosDouble(marker.Latitude, marker.Longitude, _currentZoomLevel);
+
+				int z = tileP.zoomLevel;
+				int x = (int)tileP.x;
+				int y = (int)tileP.y;
+
+				Vector3 insideTile = new Vector3((float)tileP.x - x, (float)tileP.y - y);
+
+				Tile tile = GetTileByPoint3(x, y);
+
+				if (tile != null)
+				{
+					insideTile = new Vector3(tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS + TILE_SIZE_IN_UNITS * insideTile.x,
+														 tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS - TILE_SIZE_IN_UNITS * insideTile.y, 0);
+
+					marker.transform.position = insideTile;
+				}
+			}
 		}
 
 		public void ResetLayerContainerPosition()

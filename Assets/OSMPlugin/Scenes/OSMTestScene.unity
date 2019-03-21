@@ -291,19 +291,10 @@ Prefab:
       propertyPath: _layerContainer
       value: 
       objectReference: {fileID: 1233942308}
-    - target: {fileID: 1245375735179650, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
         type: 2}
-      propertyPath: _currentLatitude
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
-        type: 2}
-      propertyPath: _currentLongitude
-      value: 0
+      propertyPath: _currentZoomLevel
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}

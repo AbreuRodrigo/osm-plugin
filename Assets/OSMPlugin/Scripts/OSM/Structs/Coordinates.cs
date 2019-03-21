@@ -1,5 +1,8 @@
-﻿namespace OSM
+﻿using System;
+
+namespace OSM
 {
+	[Serializable]
 	public struct Coordinates
 	{
 		public double latitude;

@@ -51,5 +51,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8100dd0f99942b14884059024a440dbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pinPrefab: {fileID: 1947039933989566, guid: bac9b7446679a4f409c349e295a9e2b3, type: 2}
+  _markerPrefab: {fileID: 114614756710955422, guid: bac9b7446679a4f409c349e295a9e2b3,
+    type: 2}
   _mainCamera: {fileID: 0}
