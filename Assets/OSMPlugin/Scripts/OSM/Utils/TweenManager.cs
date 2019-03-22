@@ -236,12 +236,30 @@ public class TweenManager : MonoBehaviourSingleton<TweenManager>
 
 	public void FallDownAndSquish(GameObject obj, float time, Vector3 to, Action onComplete, TweenType type = TweenType.Linear, bool unscaledTime = true, float delay = 0)
 	{
-		LeanTween.move(obj, to, time).setIgnoreTimeScale(unscaledTime).setOnComplete(() => {
-			LeanTween.scaleX(obj, 1.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => {
+		LeanTween.move(obj, to, time).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+		{
+			LeanTween.scaleX(obj, 1.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+			{
 				LeanTween.scaleX(obj, 1, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(onComplete).setEase(LeanTweenType.easeOutBack);
 			});
-			LeanTween.scaleY(obj, 0.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => {
+			LeanTween.scaleY(obj, 0.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+			{
 				LeanTween.scaleY(obj, 1, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(onComplete).setEase(LeanTweenType.easeOutBack);
+			});
+		}).setEase((LeanTweenType)type).setDelay(delay);
+	}
+
+	public void FallDownAndSquish(RectTransform rect, float time, Vector3 to, Action onComplete, TweenType type = TweenType.Linear, bool unscaledTime = true, float delay = 0)
+	{
+		LeanTween.move(rect, to, time).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+		{
+			LeanTween.scaleX(rect.gameObject, 1.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+			{
+				LeanTween.scaleX(rect.gameObject, 1, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(onComplete).setEase(LeanTweenType.easeOutBack);
+			});
+			LeanTween.scaleY(rect.gameObject, 0.5f, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(() => 
+			{
+				LeanTween.scaleY(rect.gameObject, 1, 0.1f).setIgnoreTimeScale(unscaledTime).setOnComplete(onComplete).setEase(LeanTweenType.easeOutBack);
 			});
 		}).setEase((LeanTweenType)type).setDelay(delay);
 	}
