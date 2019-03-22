@@ -20,7 +20,7 @@ namespace OSM
 		public const float TILE_QUARTER_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.0025f;
 		public const string LAYER_BASE_NAME = "Layer";
 		#endregion
-
+				
 		[Header("Layer Properties")]
 		[SerializeField]
 		private List<LayerConfig> layerConfigs;
@@ -62,6 +62,7 @@ namespace OSM
 		private float _tileValidationCounter = 0;
 		private float _fadingDurationForLayers = 0.5f;
 		private float _scalingDurationForLayers = 0.5f;
+		private float _scalingMoveSpeedForMarkers = 0.125f;
 
 		public int _tileCycleLimit;
 
@@ -110,7 +111,7 @@ namespace OSM
 
 		private void Start()
 		{
-			Application.targetFrameRate = 60;
+			//Application.targetFrameRate = 60;
 
 			StopMovements();
 			InitializeMap();
@@ -121,6 +122,17 @@ namespace OSM
 			CheckInsideScreenInitially();
 
 			DebugManager.Instance.CreateDebugFeatures();			
+		}
+
+		private void Update()
+		{
+			if(Input.GetKeyDown(KeyCode.Space))
+			{
+				foreach(Marker m in MarkerManager.Instance.Markers)
+				{
+					
+				}
+			}
 		}
 
 		private void LateUpdate()
@@ -158,8 +170,6 @@ namespace OSM
 
 				_isPlacingMarker = false;
 			}
-
-			UpdateMarkers();
 		}
 
 		private void ProcessMarkerSpawningInput()
@@ -460,7 +470,9 @@ namespace OSM
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
 
-			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () =>
+			UpdateMarkersOnZoom(2);
+
+			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, _scalingDurationForLayers, TweenType.ExponentialOut, true, null, () =>
 			{
 				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
@@ -478,7 +490,7 @@ namespace OSM
 
 				transform.position = _mapDeviationCorrection;
 
-				CalculateScreenBoundaries();					
+				CalculateScreenBoundaries();
 			});
 		}
 
@@ -539,7 +551,9 @@ namespace OSM
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
 
-			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, _scalingDurationForLayers, TweenType.BackOut, true, null, () => 
+			UpdateMarkersOnZoom(0.5f);
+
+			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, _scalingDurationForLayers, TweenType.ExponentialOut, true, null, () => 
 			{
 				CurrentLayer.FadeOut(_fadingDurationForLayers, () =>
 				{
@@ -814,7 +828,7 @@ namespace OSM
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition -= _helperVector3;
-					PrepareTileDataDownload(tile);
+					PrepareTileDataDownload(tile);					
 				}
 
 				if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.top)
@@ -835,7 +849,7 @@ namespace OSM
 
 					tile.transform.localPosition += _helperVector3;
 					PrepareTileDataDownload(tile);
-				}			
+				}
 			}
 
 			if (_isStopped == false)
@@ -953,22 +967,40 @@ namespace OSM
 					Point3Double tileP = OSMGeoHelper.GeoToTilePosDouble(marker.Latitude, marker.Longitude, _currentZoomLevel);
 
 					int z = tileP.zoomLevel;
-					int x = (int)tileP.x;
-					int y = (int)tileP.y;
+					int x = (int) tileP.x;
+					int y = (int) tileP.y;
 
-					_insideTilePosition.x = (float)tileP.x - x;
-					_insideTilePosition.y = (float)tileP.y - y;
+					_insideTilePosition.x = (float) tileP.x - x;
+					_insideTilePosition.y = (float) tileP.y - y;
 
-					Tile tile = GetTileByPoint3(x, y);
+					Tile tile = GetTileByPoint3(x, y);						
 
 					if (tile != null)
 					{
+						if(marker.Visible == false)
+						{
+							marker.FadeIn();
+						}
+
 						_insideTilePosition.x = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS + TILE_SIZE_IN_UNITS * _insideTilePosition.x;
 						_insideTilePosition.y = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS - TILE_SIZE_IN_UNITS * _insideTilePosition.y;
 
 						marker.transform.position = MarkerManager.Instance.WorldToCanvasPosition(_insideTilePosition);
 					}
+					else if(marker.transform.position.x + 0.1f < 0 || marker.transform.position.x - 0.1f > Screen.width && marker.Visible == true)
+					{
+						marker.FadeOut();
+					}
 				}
+			}
+		}
+
+		private void UpdateMarkersOnZoom(float pMultiplier)
+		{
+			foreach(Marker m in MarkerManager.Instance.Markers)
+			{
+				Vector3 worldPoint = MarkerManager.Instance.CanvasToWorldPosition(m.Image.rectTransform, m.transform.position) * pMultiplier;
+				TweenManager.Instance.Move(m.gameObject, MarkerManager.Instance.WorldToCanvasPosition(worldPoint), _scalingMoveSpeedForMarkers);
 			}
 		}
 

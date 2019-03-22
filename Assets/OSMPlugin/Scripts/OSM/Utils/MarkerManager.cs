@@ -61,14 +61,13 @@ namespace OSM
 			return temp;
 		}
 
-		public Vector3 CanvasToWorldPosition(Vector3 pPosition)
+		public Vector3 CanvasToWorldPosition(RectTransform rect, Vector3 pPosition)
 		{
-			pPosition.x /= _canvas.sizeDelta.x;
-			pPosition.y /= _canvas.sizeDelta.y;
+			Vector3 worldPoint = Vector3.zero;
 
-			Vector2 temp = _mainCamera.ViewportToWorldPoint(pPosition);
+			RectTransformUtility.ScreenPointToWorldPointInRectangle(rect, pPosition, _mainCamera, out worldPoint);
 
-			return temp;
+			return worldPoint;
 		}
 	}
 }

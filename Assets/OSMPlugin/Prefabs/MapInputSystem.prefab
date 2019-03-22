@@ -51,11 +51,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d36647ab301fc934e8a06f12f91a3cc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _useInertia: 0
-  _userVerticalMoving: 0
+  _useInertia: 1
+  _userVerticalMoving: 1
   _userHorizontalMoving: 1
-  _inertiaDuration: 2
-  _inertiaSpeedMultiplier: 0.25
+  _inertiaDuration: 1
+  _inertiaSpeedMultiplier: 0.125
   _inertiaSpeedMultiplierMobile: 1.25
   _map: {fileID: 0}
   _mainCamera: {fileID: 0}

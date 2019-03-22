@@ -10,12 +10,16 @@ namespace OSM
 		[SerializeField]
 		private bool _active;
 		[SerializeField]
+		private bool _visible;
+		[SerializeField]
 		private int _index;
 		[SerializeField]
 		private Coordinates _geoCoordinate;
 
 		[SerializeField]
 		private Image _image;
+		[SerializeField]
+		private Image _textBoard;
 		[SerializeField]
 		private TextMeshProUGUI _text;
 		[SerializeField]
@@ -57,6 +61,21 @@ namespace OSM
 			set { _image = value; }
 		}
 
+		public float Width
+		{
+			get { return Image.sprite.bounds.size.x; }
+		}
+
+		public float Height
+		{
+			get { return Image.sprite.bounds.size.y; }
+		}
+
+		public bool Visible
+		{
+			get { return _visible; }
+		}
+
 		public void SetText(string pText)
 		{
 			if(_text != null)
@@ -70,7 +89,7 @@ namespace OSM
 		{
 			Color c = _image.color;
 
-			TweenManager.Instance.ValueTransition(0, 1, 0.25f, TweenType.Linear, true, null, (float v) => {
+			TweenManager.Instance.ValueTransition(0, 1, 0.025f, TweenType.Linear, true, MakeVisible, (float v) => {
 				c.a = v;
 				_image.color = c;
 			});
@@ -80,26 +99,36 @@ namespace OSM
 		{
 			Color c = _image.color;
 
-			TweenManager.Instance.ValueTransition(1, 0, 0.25f, TweenType.Linear, true, null, (float v) => {
+			TweenManager.Instance.ValueTransition(1, 0, 0.025f, TweenType.Linear, true, null, (float v) => {
 				c.a = v;
 				_image.color = c;
-			});
+			}, MakeInvisible);
+		}
+
+		private void MakeVisible()
+		{
+			_visible = true;
+		}
+
+		private void MakeInvisible()
+		{
+			_visible = false;
 		}
 
 		public void OnPointerEnter(PointerEventData eventData)
 		{
-			if (_text != null)
+			if (_textBoard != null)
 			{
 				SetText("latitude: " + Latitude + "\n" + "longitude: " + Longitude);
-				_text.gameObject.SetActive(true);
+				_textBoard.gameObject.SetActive(true);
 			}
 		}
 
 		public void OnPointerExit(PointerEventData eventData)
 		{
-			if (_text != null)
+			if (_textBoard != null)
 			{
-				_text.gameObject.SetActive(false);
+				_textBoard.gameObject.SetActive(false);
 			}
 		}
 	}
