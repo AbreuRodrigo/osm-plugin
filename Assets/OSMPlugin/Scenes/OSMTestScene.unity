@@ -309,7 +309,11 @@ Prefab:
     - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
         type: 2}
       propertyPath: _currentZoomLevel
-      value: 3
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 1325532406638098, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}
+      propertyPath: m_Name
+      value: MarkerCanvas_deletelater
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}

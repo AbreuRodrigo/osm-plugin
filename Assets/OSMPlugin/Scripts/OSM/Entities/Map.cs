@@ -990,7 +990,9 @@ namespace OSM
 
 						marker.transform.position = MarkerManager.Instance.WorldToCanvasPosition(_insideTilePosition);
 					}
-					else if(marker.transform.position.x + 0.1f < 0 || marker.transform.position.x - 0.1f > Screen.width && marker.Visible == true)
+					else if(marker.Visible == true && 
+						(marker.transform.position.x + 0.1f < 0 || marker.transform.position.x - 0.1f > Screen.width ||
+						 marker.transform.position.y + 0.1f < 0 || marker.transform.position.y - 0.1f > Screen.height))
 					{
 						marker.FadeOut();
 					}
