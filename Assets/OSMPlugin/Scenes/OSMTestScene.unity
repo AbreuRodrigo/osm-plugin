@@ -309,7 +309,7 @@ Prefab:
     - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
         type: 2}
       propertyPath: _currentZoomLevel
-      value: 14
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1325532406638098, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}
       propertyPath: m_Name
@@ -408,10 +408,6 @@ Prefab:
     - target: {fileID: 4205491495705220, guid: 52b52e8bd40622245be4a3fb3d2480fe, type: 2}
       propertyPath: m_RootOrder
       value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 1924629949393604, guid: 52b52e8bd40622245be4a3fb3d2480fe, type: 2}
-      propertyPath: m_IsActive
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52b52e8bd40622245be4a3fb3d2480fe, type: 2}
@@ -542,11 +538,6 @@ Prefab:
       propertyPath: _debugCamera
       value: 
       objectReference: {fileID: 2077418097}
-    - target: {fileID: 114720736608223668, guid: 3c0a9dbfa9b70e0469e93d0a07ac45b0,
-        type: 2}
-      propertyPath: _debugScreenLimits
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3c0a9dbfa9b70e0469e93d0a07ac45b0, type: 2}
   m_IsPrefabAsset: 0
