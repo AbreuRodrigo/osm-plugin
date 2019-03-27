@@ -277,7 +277,7 @@ namespace OSM
 		 */
 		private void ExecuteZoomProcedures()
 		{
-			ZoomLevel zoomLevel = new ZoomLevel(2);
+			ZoomLevel zoomLevel = new ZoomLevel(3);
 
 			if (_isZooming == false && _pinchBegun)
 			{
