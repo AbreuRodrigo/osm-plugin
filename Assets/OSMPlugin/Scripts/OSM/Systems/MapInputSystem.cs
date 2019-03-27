@@ -252,8 +252,33 @@ namespace OSM
 		private bool _pinchBegun;
 		private bool _pinchEnd;
 
+
+		/*
+		 *  ZOOM LEVELS
+		 *  
+		 *  zoom	scale	sum
+		 *  3		x1		+0
+		 *  4		x2		+1
+		 *  5		x4		+2
+		 *  6		x8		+3
+		 *  7		x16		+4
+		 *  8		x32		+5
+		 *  9		x64		+6
+		 *  10		x128	+7	
+		 *  11		x256	+8
+		 *  12		x512	+9
+		 *  13		x1024	+10
+		 *  14		x2048	+11
+		 *  15		x4096	+12
+		 *  16		x8192	+13
+		 *  17		x16384	+14
+		 *  18		x32768	+15
+		 *  19		x65536	+16
+		 */
 		private void ExecuteZoomProcedures()
 		{
+			ZoomLevel zoomLevel = new ZoomLevel(2);
+
 			if (_isZooming == false && _pinchBegun)
 			{
 				StartZoom();
@@ -270,11 +295,9 @@ namespace OSM
 				StopLayerContainerScaling();
 
 				_definedDistance = false;
-
-				if (_map.LayerContainer.localScale.x == 2)
-				{
-					_map.ExecuteZooming2(1);
-				}
+								
+				//Sending the sum amount to the zoom processor
+				_map.ExecuteZooming2(zoomLevel.sum, zoomLevel.scale);
 
 				_pinchBegun = false;
 				_pinchEnd = false;
@@ -291,7 +314,7 @@ namespace OSM
 
 				float diff = distance / _map.mapHorizontalLimitInUnits;
 
-				_map.LayerContainer.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 2, diff);
+				_map.LayerContainer.localScale = Vector3.Lerp(Vector3.one, Vector3.one * zoomLevel.scale, diff);
 			}
 		}
 

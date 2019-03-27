@@ -354,6 +354,46 @@ namespace OSM
 			return centerTile;
 		}
 
+		//TODO: REVIEW
+		private Tile GetCenterTileOnCurrentLayerByPinch()
+		{
+			Tile centerTile = null;
+
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.x <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.x >= 0 &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.y >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.y <= 0)
+					{
+						return tile;
+					}
+				}
+			}
+
+			return centerTile;
+		}
+
+		//TODO: REVIEW
+		private Tile GetCenterTileOnOtherLayerByPinch()
+		{
+			Tile centerTile = null;
+
+			foreach (Tile tile in OtherLayer.Tiles)
+			{
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.x <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.x >= 0 &&
+						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.y >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.y <= 0)
+					{
+						return tile;
+					}
+				}
+			}
+
+			return centerTile;
+		}
+
 
 		public void CalculateScreenBoundaries()
 		{
@@ -498,7 +538,7 @@ namespace OSM
 		}
 
 #region TEMP
-		public void ExecuteZooming2(int pZoomLevel = 0)
+		public void ExecuteZooming2(int pZoomLevel = 0, int pZoomScale = 1)
 		{
 			_currentZoomLevel += pZoomLevel;
 
@@ -509,7 +549,7 @@ namespace OSM
 
 			if (pZoomLevel > 0)
 			{
-				DoZoomIn2();
+				DoZoomIn2(pZoomScale);
 			}
 			else if (pZoomLevel < 0)
 			{
@@ -517,7 +557,7 @@ namespace OSM
 			}
 		}
 
-		private void DoZoomIn2()
+		private void DoZoomIn2(int pZoomScale = 1)
 		{			
 			OtherLayer.FadeOut(0);
 
@@ -527,18 +567,18 @@ namespace OSM
 			MoveCurrentLayerToContainer();
 
 			ResetMapPosition();
-			ResetOtherLayerPosition();
 			OtherLayer.OrganizeTilesAsGrid();
 
 			SwapLayers();
-
-			ReferenceTilesBetweenLayersOnZoomIn();
+						
+			ReferenceTilesBetweenLayersOnZoomInByPinch(pZoomScale);
 
 			transform.position = _mapDeviationCorrection;
 
 			CalculateScreenBoundaries();
-
-			PrepareZoomInTransition(()=> {
+					
+			PrepareZoomInTransition(()=> 
+			{
 				MoveOtherLayerToMap();
 				ResetOtherLayerScale();
 			});
@@ -716,6 +756,54 @@ namespace OSM
 				OtherLayer.ChangeToBackLayer();
 
 				_auxLayer = null;
+			}
+		}
+
+		//TODO: Review later and remove the other one once this one is working properly
+		private void ReferenceTilesBetweenLayersOnZoomInByPinch(int pZoomScale)
+		{
+			Debug.Log(CurrentLayer.transform.position);
+
+			Tile otherLayerMainTile = GetCenterTileOnOtherLayerByPinch();
+			Tile currentLayerMainTile = GetCenterTileOnCurrentLayerByPinch();
+
+			Debug.Log("Other: " + otherLayerMainTile.Name);
+			Debug.Log("Current: " + currentLayerMainTile.Name);
+
+			if (otherLayerMainTile == null || currentLayerMainTile == null)
+			{
+				return;
+			}
+
+			//By this time other is already the one in focus, because the layers were already swaped, meaning that this was the current before that
+			Vector3 topLeftOtherTile = otherLayerMainTile.transform.position;
+			topLeftOtherTile.x -= TILE_HALF_SIZE_IN_UNITS * pZoomScale;
+			topLeftOtherTile.y += TILE_HALF_SIZE_IN_UNITS * pZoomScale;
+						
+			//This is the one that should be referenced by the other above
+			Vector3 topLeftCurrentTile = currentLayerMainTile.transform.position;
+			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
+
+			_mapDeviationCorrection.x = topLeftOtherTile.x - topLeftCurrentTile.x + transform.position.x;
+			_mapDeviationCorrection.y = topLeftOtherTile.y - topLeftCurrentTile.y + transform.position.y;
+
+			currentLayerMainTile.TileData = new TileData(currentLayerMainTile.TileData.index, _currentZoomLevel, otherLayerMainTile.TileData.x * pZoomScale, otherLayerMainTile.TileData.y * pZoomScale);
+			_centerTileData = currentLayerMainTile.TileData;
+
+			int x = 0, y = 0;
+
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				x = (int)((tile.transform.localPosition.x - currentLayerMainTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerMainTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+
+				if (CheckTileOnScreen(tile.transform.position))
+				{
+					DoTileDownload(tile.TileData);
+				}
 			}
 		}
 
