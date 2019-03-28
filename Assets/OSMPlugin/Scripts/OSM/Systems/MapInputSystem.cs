@@ -299,16 +299,30 @@ namespace OSM
 			}
 			else if (_isZooming == true && _pinchEnd)
 			{
+				float layerContainerScale = _map.LayerContainer.localScale.x;
+				bool willScale = layerContainerScale >= 2;
+
 				EndZoom();
 
-				_map.MoveCurrentLayerToMap();
-				StopLayerContainerScaling();
-												
-				//Sending the sum amount to the zoom processor
-				_map.ExecuteZooming2(zoomLevel.sum, zoomLevel.scale);
+				if (willScale == true)
+				{
+					_map.MoveCurrentLayerToMap();
+					StopLayerContainerScaling();
+
+					//Sending the sum amount to the zoom processor
+					_map.ExecuteZooming2(zoomLevel.sum, zoomLevel.scale);
+				}
+				else
+				{
+					TweenManager.Instance.ScaleTo(_map.LayerContainer.gameObject, Vector3.one, 0.25f, TweenType.Linear, true, null, () => 
+					{						
+						_map.MoveCurrentLayerToMap();
+						StopLayerContainerScaling();
+					});
+				}
 
 				_pinchBegun = false;
-				_pinchEnd = false;
+				_pinchEnd = false;								
 			}
 			else if (_isZooming == true)
 			{				
@@ -320,7 +334,7 @@ namespace OSM
 
 		private void ProcessMapZoom()
 		{
-/*#if UNITY_EDITOR
+#if UNITY_EDITOR
 			if (Input.GetKeyDown(KeyCode.LeftControl))
 			{
 				_pinchBegun = true;
@@ -338,8 +352,8 @@ namespace OSM
 			{
 				DebugManager.Instance.UpdateDebugTouchesEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));				
 			}
-#endif*/
-#if UNITY_ANDROID
+#endif
+#if !UNITY_EDITOR && UNITY_ANDROID
 
 			if(Input.touchCount > 0)
 			{
@@ -381,7 +395,6 @@ namespace OSM
 					DebugManager.Instance.UpdateDebugTouchesMobile(p1, p2);
 				}
 			}
-
 #endif
 
 			ExecuteZoomProcedures();
