@@ -51,20 +51,20 @@ namespace OSM
 			if (_debugScreenLimits == true && _screenLimitsMarker != null)
 			{
 				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.left, 0, 0);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.left, _map._screenBoundaries.top, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, 0, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, _map.ScreenBoundaries.top, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
-				screenLimitMarker.transform.position = new Vector3(0, _map._screenBoundaries.top, 0);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.left, _map._screenBoundaries.bottom, 0);
+				screenLimitMarker.transform.position = new Vector3(0, _map.ScreenBoundaries.top, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, _map.ScreenBoundaries.bottom, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.right, 0, 0);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.right, _map._screenBoundaries.top, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, 0, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, _map.ScreenBoundaries.top, 0);
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
-				screenLimitMarker.transform.position = new Vector3(0, _map._screenBoundaries.bottom, 0);
-				screenLimitMarker.transform.position = new Vector3(_map._screenBoundaries.right, _map._screenBoundaries.bottom, 0);
+				screenLimitMarker.transform.position = new Vector3(0, _map.ScreenBoundaries.bottom, 0);
+				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, _map.ScreenBoundaries.bottom, 0);
 			}
 		}
 
@@ -119,25 +119,20 @@ namespace OSM
 			if (_debugTouch1 != null)
 			{
 				_debugTouch1.gameObject.SetActive(true);
-
 				pPosition.z = _debugTouch1.transform.position.z;
-
 				_debugTouch1.transform.position = pPosition;
 			}
 
 			if (_debugTouch2 != null)
 			{
 				_debugTouch2.gameObject.SetActive(true);
-
 				pPosition.z = _debugTouch2.transform.position.z;
-
 				_debugTouch2.transform.position = pPosition;
 			}
 
 			if(_debugMiddlePoint != null)
 			{
 				_debugMiddlePoint.gameObject.SetActive(true);
-
 				_debugMiddlePoint.transform.position = pPosition;
 			}
 		}
@@ -155,6 +150,12 @@ namespace OSM
 			}
 		}
 
+		public void UpdatePoint(Vector3 point)
+		{
+			_debugTouch1.gameObject.SetActive(true);
+			_debugTouch1.transform.position = point;
+		}
+
 		public void InitializeDebugTouchesMobile(Vector3 pTouch1, Vector3 pTouch2)
 		{
 			_initialDebugPosition = pTouch1 + (pTouch2 - pTouch1) * 0.5f; //A + (B - A) * percent
@@ -162,12 +163,14 @@ namespace OSM
 			if (_debugTouch1 != null)
 			{
 				_debugTouch1.gameObject.SetActive(true);
+				pTouch1.z = _debugTouch1.transform.position.z;
 				_debugTouch1.transform.position = pTouch1;
 			}
 
 			if (_debugTouch2 != null)
 			{
 				_debugTouch2.gameObject.SetActive(true);
+				pTouch2.z = _debugTouch2.transform.position.z;
 				_debugTouch2.transform.position = pTouch2;
 			}
 

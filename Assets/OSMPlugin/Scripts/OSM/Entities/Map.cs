@@ -66,17 +66,17 @@ namespace OSM
 
 		public int _tileCycleLimit;
 
-		public ScreenBoundaries _screenBoundaries;
+		public ScreenBoundaries ScreenBoundaries { get; private set; }
 
 		public float mapVerticalLimitInUnits;
 		public float mapHorizontalLimitInUnits;
 
 		//Movement Detection
-		public bool _isMovingLeft;
-		public bool _isMovingRight;
-		public bool _isMovingUp;
-		public bool _isMovingDown;
-		public bool _isStopped;
+		private bool _isMovingLeft;
+		private bool _isMovingRight;
+		private bool _isMovingUp;
+		private bool _isMovingDown;
+		private bool _isStopped;
 
 		public float TileSize { get; private set; }
 		public float CurrentZoomLevel { get { return _currentZoomLevel; } }
@@ -109,7 +109,7 @@ namespace OSM
 			}
 		}
 
-		public Vector3 _mapDeviationCorrection;
+		private Vector3 _mapDeviationCorrection;
 
 		private void Start()
 		{
@@ -405,15 +405,15 @@ namespace OSM
 
 		public void CalculateScreenBoundaries()
 		{
-			_screenBoundaries = new ScreenBoundaries(mainCamera);
+			ScreenBoundaries = new ScreenBoundaries(mainCamera);
 
 			_tileCycleLimit = (int)Mathf.Pow(2, _currentZoomLevel) - 1;
 
 			_mapMinYByZoomLevel = _centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 			_mapMaxYByZoomLevel = (_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 
-			mapVerticalLimitInUnits = (int)(_screenBoundaries.top * 2.0f);
-			mapHorizontalLimitInUnits = (int)(_screenBoundaries.right * 2.0f);
+			mapVerticalLimitInUnits = (int)(ScreenBoundaries.top * 2.0f);
+			mapHorizontalLimitInUnits = (int)(ScreenBoundaries.right * 2.0f);
 		}
 
 		protected void ValidateOnScreenTiles()
@@ -728,10 +728,10 @@ namespace OSM
 
 		public bool CheckTileOnScreen(Vector3 tilePosition, float size = TILE_HALF_SIZE_IN_UNITS)
 		{
-			return tilePosition.x + size >= _screenBoundaries.left &&
-				   tilePosition.x - size <= _screenBoundaries.right &&
-				   tilePosition.y + size >= _screenBoundaries.bottom &&
-				   tilePosition.y - size <= _screenBoundaries.top;
+			return tilePosition.x + size >= ScreenBoundaries.left &&
+				   tilePosition.x - size <= ScreenBoundaries.right &&
+				   tilePosition.y + size >= ScreenBoundaries.bottom &&
+				   tilePosition.y - size <= ScreenBoundaries.top;
 		}
 
 		private void DownloadInitialTiles()
@@ -909,7 +909,7 @@ namespace OSM
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.left)
+				if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -919,7 +919,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.right)
+				if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -929,7 +929,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);					
 				}
 
-				if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.top)
+				if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -939,7 +939,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.bottom)
+				if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -960,7 +960,7 @@ namespace OSM
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.left)
+				if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -970,7 +970,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.right)
+				if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -980,7 +980,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > _screenBoundaries.top)
+				if (tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -990,7 +990,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < _screenBoundaries.bottom)
+				if (tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -1114,10 +1114,10 @@ namespace OSM
 
 		private bool CheckObjectOutsideScreenLimits(Vector3 pVectorPoint)
 		{
-			return pVectorPoint.x < _screenBoundaries.left ||
-				   pVectorPoint.x > _screenBoundaries.right ||
-				   pVectorPoint.y < _screenBoundaries.bottom ||
-				   pVectorPoint.y > _screenBoundaries.top;
+			return pVectorPoint.x < ScreenBoundaries.left ||
+				   pVectorPoint.x > ScreenBoundaries.right ||
+				   pVectorPoint.y < ScreenBoundaries.bottom ||
+				   pVectorPoint.y > ScreenBoundaries.top;
 		}
 
 		public void ResetLayerContainerPosition()

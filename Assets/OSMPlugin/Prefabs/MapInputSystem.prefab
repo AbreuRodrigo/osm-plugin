@@ -62,3 +62,4 @@ MonoBehaviour:
   _zoomSpeed: 0
   _isZooming: 0
   _zoomDebugTransition: 3
+  _zoomGapOnPinch: 3

@@ -45,9 +45,6 @@ namespace OSM
 		[SerializeField]
 		private bool _isZooming = false;
 		[SerializeField]
-		[Range(Map.MIN_ZOOM_LEVEL, Map.MAX_ZOOM_LEVEL)]
-		private float _zoomDebugTransition;
-		[SerializeField]
 		private int _zoomGapOnPinch = 3;
 
 		private void Start()
@@ -112,16 +109,16 @@ namespace OSM
 
 		private void UpdateMapPositionLimits()
 		{
-			if (_map.transform.position.y + _map._mapMinYByZoomLevel < _map._screenBoundaries.top)
+			if (_map.transform.position.y + _map._mapMinYByZoomLevel < _map.ScreenBoundaries.top)
 			{
 				_mapLimitVector = _map.transform.position;
-				_mapLimitVector.y = _map._screenBoundaries.top - _map._mapMinYByZoomLevel;
+				_mapLimitVector.y = _map.ScreenBoundaries.top - _map._mapMinYByZoomLevel;
 				_map.transform.position = _mapLimitVector;
 			}
-			if (_map.transform.position.y - _map._mapMaxYByZoomLevel > _map._screenBoundaries.bottom)
+			if (_map.transform.position.y - _map._mapMaxYByZoomLevel > _map.ScreenBoundaries.bottom)
 			{
 				_mapLimitVector = _map.transform.position;
-				_mapLimitVector.y = _map._screenBoundaries.bottom + _map._mapMaxYByZoomLevel;
+				_mapLimitVector.y = _map.ScreenBoundaries.bottom + _map._mapMaxYByZoomLevel;
 				_map.transform.position = _mapLimitVector;
 			}
 		}
@@ -248,14 +245,14 @@ namespace OSM
 		}
 
 		private float _initialMapZoom;
-		private float _initialDistance;
-		private bool _definedDistance;
 
 		private bool _pinchBegun;
 		private bool _pinchEnd;
 
 		private Vector3 _initialScale;
 
+		private bool _startPinching;
+		private float _initialPinchDistance;
 
 		/*
 		 *  ZOOM LEVELS
@@ -306,36 +303,24 @@ namespace OSM
 
 				_map.MoveCurrentLayerToMap();
 				StopLayerContainerScaling();
-
-				_definedDistance = false;
-								
+												
 				//Sending the sum amount to the zoom processor
 				_map.ExecuteZooming2(zoomLevel.sum, zoomLevel.scale);
 
 				_pinchBegun = false;
 				_pinchEnd = false;
-
-				_initialDistance = 0;
 			}
 			else if (_isZooming == true)
 			{				
-				float distance = DebugManager.Instance.GetDisanceBetweenTouches();
-
-				if (_definedDistance == false)
-				{
-					_definedDistance = true;
-					_initialDistance = distance;
-				}
-
+				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;								
 				float diff = distance / _map.mapHorizontalLimitInUnits;
-
 				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _initialScale * zoomLevel.scale, diff);
 			}
 		}
 
 		private void ProcessMapZoom()
 		{
-#if UNITY_EDITOR
+/*#if UNITY_EDITOR
 			if (Input.GetKeyDown(KeyCode.LeftControl))
 			{
 				_pinchBegun = true;
@@ -353,8 +338,8 @@ namespace OSM
 			{
 				DebugManager.Instance.UpdateDebugTouchesEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));				
 			}
-#endif
-#if !UNITY_EDITOR && UNITY_ANDROID
+#endif*/
+#if UNITY_ANDROID
 
 			if(Input.touchCount > 0)
 			{
@@ -364,25 +349,31 @@ namespace OSM
 				{
 					Touch t1 = Input.GetTouch(0);
 					Touch t2 = Input.GetTouch(1);
-			
-					p1 = t1.position;
-					p2 = t2.position;
-
-					float d = Vector3.Distance(p1, p2);
-
-					DebugManager.Instance.UpdatePinchLevel(d);
 
 					_pinchBegun = true;
 					_pinchEnd = false;
 
-					StartLayerContainerScalingMobile(p1, p2);
-				}
-				else if(_isZooming == true && Input.touchCount < 2)
-				{
-					EndZoom();
+					p1 = _mainCamera.ScreenToWorldPoint(new Vector3(t1.position.x, t1.position.y, _mainCamera.transform.position.z * -1));
+					p2 = _mainCamera.ScreenToWorldPoint(new Vector3(t2.position.x, t2.position.y, _mainCamera.transform.position.z * -1));
 
-					_pinchBegun = false;
-					_pinchEnd = true;
+					//When began, will define the pinch intitial distance
+					if (t1.phase == TouchPhase.Began && t2.phase == TouchPhase.Began)
+					{
+						_initialPinchDistance = Vector3.Distance(p1, p2);
+					}
+					
+					//When released the touches will stop the pinch function and reset the intial pinch distance
+					if (t1.phase == TouchPhase.Ended || t2.phase == TouchPhase.Ended)
+					{
+						_pinchBegun = false;
+						_pinchEnd = true;
+
+						_initialPinchDistance = 0;
+					}
+					else//Otherwise when not end will keep the container scaling
+					{
+						StartLayerContainerScalingMobile(p1, p2);
+					}
 				}
 
 				if(_isZooming == true)
