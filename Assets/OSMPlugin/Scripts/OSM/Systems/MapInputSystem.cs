@@ -47,6 +47,8 @@ namespace OSM
 		[SerializeField]
 		[Range(Map.MIN_ZOOM_LEVEL, Map.MAX_ZOOM_LEVEL)]
 		private float _zoomDebugTransition;
+		[SerializeField]
+		private int _zoomGapOnPinch = 3;
 
 		private void Start()
 		{
@@ -279,7 +281,14 @@ namespace OSM
 		 */
 		private void ExecuteZoomProcedures()
 		{
-			ZoomLevel zoomLevel = new ZoomLevel(3);
+			int zoomDiff = (int) _map.CurrentZoomLevel + _zoomGapOnPinch;
+
+			if(zoomDiff > Map.MAX_ZOOM_LEVEL)
+			{
+				_zoomGapOnPinch = Map.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
+			}
+
+			ZoomLevel zoomLevel = new ZoomLevel(_zoomGapOnPinch);
 
 			if (_isZooming == false && _pinchBegun)
 			{
