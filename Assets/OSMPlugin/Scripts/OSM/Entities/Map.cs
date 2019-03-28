@@ -97,6 +97,8 @@ namespace OSM
 		private float _tapTiming;
 		private int _tapCounter;
 
+		private GameObject pLayerReplica;
+
 		[SerializeField]
 		private GameObject _layerContainer;
 		public Transform LayerContainer
@@ -357,17 +359,20 @@ namespace OSM
 		//TODO: REVIEW
 		private Tile GetCenterTileOnCurrentLayerByPinch()
 		{
+			float distance = -1;
 			Tile centerTile = null;
 
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if (CheckTileOnScreen(tile.transform.position))
+				if(distance == -1)
 				{
-					if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.x <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.x >= 0 &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.y >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * CurrentLayer.transform.localScale.y <= 0)
-					{
-						return tile;
-					}
+					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
+					centerTile = tile;
+				}
+				else if(Vector3.Distance(tile.transform.position, Vector3.zero) < distance)
+				{
+					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
+					centerTile = tile;
 				}
 			}
 
@@ -377,17 +382,20 @@ namespace OSM
 		//TODO: REVIEW
 		private Tile GetCenterTileOnOtherLayerByPinch()
 		{
+			float distance = -1;
 			Tile centerTile = null;
 
 			foreach (Tile tile in OtherLayer.Tiles)
 			{
-				if (CheckTileOnScreen(tile.transform.position))
+				if (distance == -1)
 				{
-					if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.x <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.x >= 0 &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.y >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.y <= 0)
-					{
-						return tile;
-					}
+					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
+					centerTile = tile;
+				}
+				else if (Vector3.Distance(tile.transform.position, Vector3.zero) < distance)
+				{
+					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
+					centerTile = tile;
 				}
 			}
 
@@ -534,6 +542,8 @@ namespace OSM
 				transform.position = _mapDeviationCorrection;
 
 				CalculateScreenBoundaries();
+
+				ReplicateOtherLayer();
 			});
 		}
 
@@ -580,8 +590,10 @@ namespace OSM
 			PrepareZoomInTransition(()=> 
 			{
 				MoveOtherLayerToMap();
+				ReplicateOtherLayer();
 				ResetOtherLayerScale();
-			});
+				CheckInsideScreenInitially();
+			});						
 		}
 #endregion
 
@@ -762,13 +774,8 @@ namespace OSM
 		//TODO: Review later and remove the other one once this one is working properly
 		private void ReferenceTilesBetweenLayersOnZoomInByPinch(int pZoomScale)
 		{
-			Debug.Log(CurrentLayer.transform.position);
-
 			Tile otherLayerMainTile = GetCenterTileOnOtherLayerByPinch();
 			Tile currentLayerMainTile = GetCenterTileOnCurrentLayerByPinch();
-
-			Debug.Log("Other: " + otherLayerMainTile.Name);
-			Debug.Log("Current: " + currentLayerMainTile.Name);
 
 			if (otherLayerMainTile == null || currentLayerMainTile == null)
 			{
@@ -803,7 +810,7 @@ namespace OSM
 				if (CheckTileOnScreen(tile.transform.position))
 				{
 					DoTileDownload(tile.TileData);
-				}
+				}				
 			}
 		}
 
@@ -992,6 +999,14 @@ namespace OSM
 					tile.transform.localPosition += _helperVector3;
 					PrepareTileDataDownload(tile);
 				}
+			}						
+		}
+
+		private void ForcePrepareDownload()
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				PrepareTileDataDownload(tile);
 			}
 		}
 
@@ -1150,7 +1165,7 @@ namespace OSM
 			}
 		}
 
-		public void MoveOtherLayerToContainer()
+		private void MoveOtherLayerToContainer()
 		{
 			if (OtherLayer != null && _layerContainer != null)
 			{
@@ -1158,12 +1173,22 @@ namespace OSM
 			}
 		}
 
-		public void MoveOtherLayerToMap()
+		private void MoveOtherLayerToMap()
 		{
 			if (OtherLayer != null)
 			{
 				OtherLayer.transform.SetParent(transform);
 			}
+		}
+
+		private void ReplicateOtherLayer()
+		{
+			if (pLayerReplica != null)
+			{
+				Destroy(pLayerReplica);
+			}
+
+			pLayerReplica = Instantiate(OtherLayer.gameObject, transform);
 		}
 	}
 }

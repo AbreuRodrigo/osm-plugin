@@ -252,6 +252,8 @@ namespace OSM
 		private bool _pinchBegun;
 		private bool _pinchEnd;
 
+		private Vector3 _initialScale;
+
 
 		/*
 		 *  ZOOM LEVELS
@@ -285,7 +287,9 @@ namespace OSM
 
 				_initialMapZoom = _map.CurrentZoomLevel;
 
-				_map.MoveCurrentLayerToContainer();				
+				_initialScale = _map.LayerContainer.localScale;
+
+				_map.MoveCurrentLayerToContainer();
 			}
 			else if (_isZooming == true && _pinchEnd)
 			{
@@ -301,6 +305,8 @@ namespace OSM
 
 				_pinchBegun = false;
 				_pinchEnd = false;
+
+				_initialDistance = 0;
 			}
 			else if (_isZooming == true)
 			{				
@@ -314,7 +320,7 @@ namespace OSM
 
 				float diff = distance / _map.mapHorizontalLimitInUnits;
 
-				_map.LayerContainer.localScale = Vector3.Lerp(Vector3.one, Vector3.one * zoomLevel.scale, diff);
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _initialScale * zoomLevel.scale, diff);
 			}
 		}
 
