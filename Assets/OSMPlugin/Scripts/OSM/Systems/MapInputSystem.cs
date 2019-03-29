@@ -250,6 +250,7 @@ namespace OSM
 		private bool _pinchEnd;
 
 		private Vector3 _initialScale;
+		private Vector3 _targetScale;
 
 		private bool _startPinching;
 		private float _initialPinchDistance;
@@ -294,11 +295,14 @@ namespace OSM
 				_initialMapZoom = _map.CurrentZoomLevel;
 
 				_initialScale = _map.LayerContainer.localScale;
+				_targetScale = _initialScale * zoomLevel.scale;
 
 				_map.MoveCurrentLayerToContainer();
 			}
 			else if (_isZooming == true && _pinchEnd)
 			{
+				//TODO:  Work on the zoom fractions
+
 				float layerContainerScale = _map.LayerContainer.localScale.x;
 				bool willScale = layerContainerScale >= 2;
 
@@ -328,7 +332,7 @@ namespace OSM
 			{				
 				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;								
 				float diff = distance / _map.mapHorizontalLimitInUnits;
-				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _initialScale * zoomLevel.scale, diff);
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, diff);
 			}
 		}
 

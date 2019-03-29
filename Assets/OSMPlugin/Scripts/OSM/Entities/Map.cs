@@ -97,7 +97,7 @@ namespace OSM
 		private float _tapTiming;
 		private int _tapCounter;
 
-		private GameObject pLayerReplica;
+		private Layer pLayerReplica;
 
 		[SerializeField]
 		private GameObject _layerContainer;
@@ -626,7 +626,9 @@ namespace OSM
 
 				transform.position = _mapDeviationCorrection;
 
-				CalculateScreenBoundaries();				
+				CalculateScreenBoundaries();
+
+				ReplicateOtherLayer();
 			});
 		}
 
@@ -1185,10 +1187,10 @@ namespace OSM
 		{
 			if (pLayerReplica != null)
 			{
-				Destroy(pLayerReplica);
+				Destroy(pLayerReplica.gameObject);
 			}
 
-			pLayerReplica = Instantiate(OtherLayer.gameObject, transform);
+			pLayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
 		}
 	}
 }
