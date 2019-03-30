@@ -49,10 +49,9 @@ namespace OSM
 		[SerializeField]
 		private Layer _layerTemplate;
 
-		private List<Layer> _layers = new List<Layer>();
-
 		public Layer CurrentLayer { get; private set; }
 		public Layer OtherLayer { get; private set; }
+		public Layer LayerReplica { get; private set; }
 
 		public int NextZoomLevel { get; set; }
 
@@ -97,7 +96,12 @@ namespace OSM
 		private float _tapTiming;
 		private int _tapCounter;
 
-		private Layer pLayerReplica;
+		//Vars
+		private int _distX = 0;
+		private int _distY = 0;
+		private int _nextX = 0;
+		private int _nextY = 0;
+		private int _correctionX = 0;
 
 		[SerializeField]
 		private GameObject _layerContainer;
@@ -287,8 +291,6 @@ namespace OSM
 					OtherLayer = layer;
 					OtherLayer.gameObject.name = OTHER_LAYER;
 				}
-
-				_layers.Add(layer);
 
 				layerIndex++;
 			}
@@ -548,7 +550,7 @@ namespace OSM
 		}
 
 #region TEMP
-		public void ExecuteZooming2(int pZoomLevel = 0, int pZoomScale = 1)
+		public void ExecuteZoomingWithPinch(int pZoomLevel = 0, int pZoomScale = 1)
 		{
 			_currentZoomLevel += pZoomLevel;
 
@@ -689,26 +691,26 @@ namespace OSM
 
 		private void PrepareTileDataDownload(Tile tile)
 		{
-			int distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
-			int distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
+			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
+			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
 
-			int nextX = _centerTileData.x + distX;
-			int nextY = _centerTileData.y - distY;
+			_nextX = _centerTileData.x + _distX;
+			_nextY = _centerTileData.y - _distY;
 
-			if (nextX > _tileCycleLimit)
+			if (_nextX > _tileCycleLimit)
 			{
-				int correctionX = nextX / (_tileCycleLimit + 1);
-				nextX = nextX - (_tileCycleLimit + 1) * correctionX;
+				_correctionX = _nextX / (_tileCycleLimit + 1);
+				_nextX = _nextX - (_tileCycleLimit + 1) * _correctionX;
 			}
-			else if (nextX < 0)
+			else if (_nextX < 0)
 			{
-				nextX = (nextX * -1) - 1;//Inversion
-				int correctionX = nextX / (_tileCycleLimit + 1);//Correction
-				nextX = nextX - (_tileCycleLimit + 1) * correctionX;//Formula
-				nextX = _tileCycleLimit - nextX;
+				_nextX = (_nextX * -1) - 1;//Inversion
+				_correctionX = _nextX / (_tileCycleLimit + 1);//Correction
+				_nextX = _nextX - (_tileCycleLimit + 1) * _correctionX;//Formula
+				_nextX = _tileCycleLimit - _nextX;
 			}
 
-			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, nextX, nextY);
+			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _nextX, _nextY);
 
 			DoTileDownload(tile.TileData);
 		}
@@ -1185,12 +1187,14 @@ namespace OSM
 
 		private void ReplicateOtherLayer()
 		{
-			if (pLayerReplica != null)
+			if (LayerReplica != null)
 			{
-				Destroy(pLayerReplica.gameObject);
+				Destroy(LayerReplica.gameObject);
 			}
 
-			pLayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
+			OtherLayer.ChangeToBackLayer();
+			LayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
+			LayerReplica.ChangeToMiddleLayer();
 		}
 	}
 }

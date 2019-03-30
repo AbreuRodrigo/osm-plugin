@@ -10,7 +10,13 @@ namespace OSM
 		public ZoomLevel(int sum)
 		{
 			this.sum = sum;
-			this.scale = (int) Math.Pow(2, sum);
+			this.scale = (int)Math.Pow(2, sum);
+		}
+
+		public void ResetLevel(int sum)
+		{
+			this.sum = sum;
+			this.scale = (int)Math.Pow(2, sum);
 		}
 	}
 }

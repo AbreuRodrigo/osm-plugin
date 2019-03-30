@@ -35,5 +35,14 @@ namespace OSM
 		{
 			name += OSMGeoHelper.GetTileName(zoom, x, y);
 		}
+
+		public void Reset(int index, int zoom, int x, int y)
+		{
+			this.index = index;
+			this.zoom = zoom;
+			this.x = x;
+			this.y = y;
+			RedefineName();
+		}
 	}
 }

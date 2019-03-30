@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace OSM
@@ -22,6 +23,8 @@ namespace OSM
 		[SerializeField]
 		private bool _updatePinchLevel;
 		[SerializeField]
+		private bool _showLineMarkers;
+		[SerializeField]
 		private GameObject _screenLimitsMarker;
 
 		[Header("Dependencies")]
@@ -40,10 +43,16 @@ namespace OSM
 
 		private Vector3 _initialDebugPosition;
 
+		private Vector3 _lineMarker1;
+		private Vector3 _lineMarker2;
+		private Vector3 _lineMarker3;
+		private Vector3 _lineMarker4;
+
 		private void LateUpdate()
 		{
 			ShowDebugTargetTile();
 			UpdateZoomLevel();
+			ShowLineMarkers();
 		}
 
 		public void CreateDebugFeatures()
@@ -53,18 +62,22 @@ namespace OSM
 				GameObject screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, 0, 0);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, _map.ScreenBoundaries.top, 0);
+				_lineMarker1 = screenLimitMarker.transform.position;
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
 				screenLimitMarker.transform.position = new Vector3(0, _map.ScreenBoundaries.top, 0);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.left, _map.ScreenBoundaries.bottom, 0);
+				_lineMarker2 = screenLimitMarker.transform.position;
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, 0, 0);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, _map.ScreenBoundaries.top, 0);
+				_lineMarker3 = screenLimitMarker.transform.position;
 
 				screenLimitMarker = Instantiate(_screenLimitsMarker, transform);
 				screenLimitMarker.transform.position = new Vector3(0, _map.ScreenBoundaries.bottom, 0);
 				screenLimitMarker.transform.position = new Vector3(_map.ScreenBoundaries.right, _map.ScreenBoundaries.bottom, 0);
+				_lineMarker4 = screenLimitMarker.transform.position;
 			}
 		}
 
@@ -93,6 +106,17 @@ namespace OSM
 				}
 
 				Debug.DrawLine(Vector3.zero, mp);
+			}
+		}
+
+		private void ShowLineMarkers()
+		{
+			if(_showLineMarkers)
+			{
+				Debug.DrawLine(_lineMarker1, _lineMarker3, Color.green);
+				Debug.DrawLine(_lineMarker3, _lineMarker4, Color.green);
+				Debug.DrawLine(_lineMarker4, _lineMarker2, Color.green);
+				Debug.DrawLine(_lineMarker2, _lineMarker1, Color.green);
 			}
 		}
 

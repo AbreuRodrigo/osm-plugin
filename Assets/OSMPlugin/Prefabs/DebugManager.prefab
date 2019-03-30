@@ -147,6 +147,7 @@ MonoBehaviour:
   _showDebugTargetTile: 0
   _updateZoomLevel: 1
   _updatePinchLevel: 1
+  _showLineMarkers: 1
   _screenLimitsMarker: {fileID: 1944826413076434, guid: b5bc6d3d2a62ef54cae1e980df0bb944,
     type: 2}
   _map: {fileID: 0}

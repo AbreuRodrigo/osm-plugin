@@ -245,6 +245,7 @@ namespace OSM
 		}
 
 		private float _initialMapZoom;
+		private float _zoomPercent;
 
 		private bool _pinchBegun;
 		private bool _pinchEnd;
@@ -254,6 +255,9 @@ namespace OSM
 
 		private bool _startPinching;
 		private float _initialPinchDistance;
+
+		private ZoomLevel _zoomLevel;
+		private int _layerContainerScale;
 
 		/*
 		 *  ZOOM LEVELS
@@ -286,7 +290,7 @@ namespace OSM
 				_zoomGapOnPinch = Map.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
 			}
 
-			ZoomLevel zoomLevel = new ZoomLevel(_zoomGapOnPinch);
+			_zoomLevel = new ZoomLevel(_zoomGapOnPinch);
 
 			if (_isZooming == false && _pinchBegun)
 			{
@@ -295,7 +299,7 @@ namespace OSM
 				_initialMapZoom = _map.CurrentZoomLevel;
 
 				_initialScale = _map.LayerContainer.localScale;
-				_targetScale = _initialScale * zoomLevel.scale;
+				_targetScale = _initialScale * _zoomLevel.scale;
 
 				_map.MoveCurrentLayerToContainer();
 			}
@@ -303,36 +307,32 @@ namespace OSM
 			{
 				//TODO:  Work on the zoom fractions
 
-				float layerContainerScale = _map.LayerContainer.localScale.x;
-				bool willScale = layerContainerScale >= 2;
-
 				EndZoom();
 
-				if (willScale == true)
-				{
-					_map.MoveCurrentLayerToMap();
-					StopLayerContainerScaling();
+				_layerContainerScale = (int) Mathf.Round(_map.LayerContainer.localScale.x);
+				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
 
-					//Sending the sum amount to the zoom processor
-					_map.ExecuteZooming2(zoomLevel.sum, zoomLevel.scale);
-				}
-				else
-				{
-					TweenManager.Instance.ScaleTo(_map.LayerContainer.gameObject, Vector3.one, 0.25f, TweenType.Linear, true, null, () => 
-					{						
-						_map.MoveCurrentLayerToMap();
-						StopLayerContainerScaling();
-					});
-				}
+				_map.MoveCurrentLayerToMap();
+
+				StopLayerContainerScaling();
+
+				_zoomLevel.ResetLevel(_layerContainerScale);
+				_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale);				
 
 				_pinchBegun = false;
-				_pinchEnd = false;								
+				_pinchEnd = false;
 			}
 			else if (_isZooming == true)
 			{				
-				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;								
-				float diff = distance / _map.mapHorizontalLimitInUnits;
-				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, diff);
+				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;
+				_zoomPercent = distance / _map.mapHorizontalLimitInUnits;
+
+				if(_zoomPercent > 1.0f)
+				{
+					_zoomPercent = 1.0f;
+				}
+
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
 			}
 		}
 

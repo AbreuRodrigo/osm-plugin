@@ -8,7 +8,8 @@ namespace OSM
 	public class Layer : MonoBehaviour
 	{
 		private const int BACK_RENDERING_LAYER = 2;
-		private const int FRONT_RENDERING_LAYER = 3;
+		private const int MIDDLE_RENDERING_LAYER = 3;
+		private const int FRONT_RENDERING_LAYER = 4;
 
 		private float _tileSize;
 		private List<Tile> _tiles = new List<Tile>();
@@ -218,6 +219,11 @@ namespace OSM
 		public void ChangeToBackLayer()
 		{
 			ChangeRenderingLayer(BACK_RENDERING_LAYER);
+		}
+
+		public void ChangeToMiddleLayer()
+		{
+			ChangeRenderingLayer(MIDDLE_RENDERING_LAYER);
 		}
 
 		public void ChangeToFrontLayer()
