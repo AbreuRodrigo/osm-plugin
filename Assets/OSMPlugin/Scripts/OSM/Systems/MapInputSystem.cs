@@ -30,6 +30,8 @@ namespace OSM
 		private Map _map;
 		[SerializeField]
 		private Camera _mainCamera;
+		[SerializeField]
+		private GameObject _world;
 
 		private bool _isPressed;
 		private Vector3 _clickDistance;
@@ -244,6 +246,9 @@ namespace OSM
 			_isZooming = false;
 		}
 
+		public bool userPinchSimulatorForZoom;
+		public bool useButtonsForZoom;
+
 		private float _initialMapZoom;
 		private float _zoomPercent;
 
@@ -258,6 +263,10 @@ namespace OSM
 
 		private ZoomLevel _zoomLevel;
 		private int _layerContainerScale;
+
+		private float accumulator;
+		private bool isZoomingInWithButton;
+		private bool isZoomingOutWithButton;
 
 		/*
 		 *  ZOOM LEVELS
@@ -317,7 +326,7 @@ namespace OSM
 				StopLayerContainerScaling();
 
 				_zoomLevel.ResetLevel(_layerContainerScale);
-				_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale);				
+				_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale);
 
 				_pinchBegun = false;
 				_pinchEnd = false;
@@ -335,26 +344,33 @@ namespace OSM
 				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
 			}
 		}
-
+						
 		private void ProcessMapZoom()
 		{
 #if UNITY_EDITOR
-			if (Input.GetKeyDown(KeyCode.LeftControl))
+			if (userPinchSimulatorForZoom == true)
 			{
-				_pinchBegun = true;
-				_pinchEnd = false;
+				if (Input.GetKeyDown(KeyCode.LeftControl))
+				{
+					_pinchBegun = true;
+					_pinchEnd = false;
 
-				StartLayerContainerScalingEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
-			}
-			else if(Input.GetKeyUp(KeyCode.LeftControl))
-			{
-				_pinchBegun = false;
-				_pinchEnd = true;
-			}
+					StartLayerContainerScalingEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
+				}
+				else if (Input.GetKeyUp(KeyCode.LeftControl))
+				{
+					_pinchBegun = false;
+					_pinchEnd = true;
+				}
 
-			if(_isZooming == true)
+				if (_isZooming == true)
+				{
+					DebugManager.Instance.UpdateDebugTouchesEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));
+				}
+			}
+			else if (useButtonsForZoom == true)
 			{
-				DebugManager.Instance.UpdateDebugTouchesEditor(_mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1)));				
+				DoZoomWithButtonsLogic();
 			}
 #endif
 #if !UNITY_EDITOR && UNITY_ANDROID
@@ -436,6 +452,53 @@ namespace OSM
 			{
 				_isScaling = false;
 				DebugManager.Instance.DisableDebugTouch();
+			}
+		}
+
+		private void DoZoomWithButtonsLogic()
+		{
+			if (Input.GetKeyDown(KeyCode.S))
+			{
+				isZoomingInWithButton = true;
+			}
+			else if (Input.GetKeyUp(KeyCode.S))
+			{
+				isZoomingInWithButton = false;
+			}
+
+			if (Input.GetKeyDown(KeyCode.Z))
+			{
+				isZoomingOutWithButton = true;
+			}
+			else if (Input.GetKeyUp(KeyCode.Z))
+			{
+				isZoomingOutWithButton = false;
+			}
+
+			if (isZoomingInWithButton == true)
+			{
+				accumulator += 0.01f;
+			}
+			if (isZoomingOutWithButton == true)
+			{
+				accumulator -= 0.01f;
+			}
+
+			if (accumulator > Map.MAX_ZOOM_LEVEL)
+			{
+				accumulator = Map.MAX_ZOOM_LEVEL;
+			}
+			if(accumulator < Map.MIN_ZOOM_LEVEL)
+			{
+				accumulator = Map.MIN_ZOOM_LEVEL;
+			}
+
+			if(_world != null && (isZoomingInWithButton == true || isZoomingOutWithButton == true))
+			{
+				if (accumulator >= Map.MIN_ZOOM_LEVEL)
+				{
+					_world.transform.localScale = new Vector3(accumulator - (Map.MIN_ZOOM_LEVEL -1), accumulator - (Map.MIN_ZOOM_LEVEL -1), 1);
+				}
 			}
 		}
 	}

@@ -36,12 +36,13 @@ namespace OSM
 
 		[Header("Dependencies")]
 		public Camera mainCamera;
+		public GameObject _world;
 
 		[SerializeField]
 		[Range(MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL)]
-		private int _currentZoomLevel = 1;
+		private int _currentZoomLevel = MIN_ZOOM_LEVEL;
 
-		private float _previousZoomLevel = 1;
+		private float _previousZoomLevel = MIN_ZOOM_LEVEL;
 
 		[Header("Prefabs")]
 		[SerializeField]
@@ -67,7 +68,6 @@ namespace OSM
 
 		public ScreenBoundaries ScreenBoundaries { get; private set; }
 
-		public float mapVerticalLimitInUnits;
 		public float mapHorizontalLimitInUnits;
 
 		//Movement Detection
@@ -82,7 +82,6 @@ namespace OSM
 
 		[SerializeField]
 		private TileData _centerTileData;
-		private Vector3 _displacementLevel;
 		private Vector3 _helperVector3;
 		private Vector3 _insideTilePosition;
 
@@ -103,6 +102,8 @@ namespace OSM
 		private int _nextY = 0;
 		private int _correctionX = 0;
 
+		public float zoomMultiplier = 1;
+
 		[SerializeField]
 		private GameObject _layerContainer;
 		public Transform LayerContainer
@@ -117,6 +118,8 @@ namespace OSM
 
 		private void Start()
 		{
+			_world.transform.localScale = new Vector3(zoomMultiplier, zoomMultiplier, 1);
+
 			if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
 			{
 				Application.targetFrameRate = 60;
@@ -128,20 +131,9 @@ namespace OSM
 			InitialZoom();
 
 			CalculateScreenBoundaries();
-			CheckInsideScreenInitially();
+			CheckCurrentLayerWithinScreenLimits(false);
 
 			DebugManager.Instance.CreateDebugFeatures();			
-		}
-
-		private void Update()
-		{
-			if(Input.GetKeyDown(KeyCode.Space))
-			{
-				foreach(Marker m in MarkerManager.Instance.Markers)
-				{
-					
-				}
-			}
 		}
 
 		private void LateUpdate()
@@ -162,7 +154,7 @@ namespace OSM
 			{
 				Vector3 point = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
 				
-				Tile tile = GetTileByVectorPoint(point);
+				Tile tile = GetTileByVectorPointForMarker(point);
 
 				float tileXTopLeft = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS;
 				float tileYTopLeft = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS;
@@ -264,8 +256,6 @@ namespace OSM
 			{
 				TileSize = TILE_SIZE_IN_PIXELS;
 			}
-
-			_displacementLevel = new Vector3(TileSize * 0.5f, TileSize * 0.5f, 0);
 		}
 
 		private void InitializeLayers()
@@ -414,7 +404,6 @@ namespace OSM
 			_mapMinYByZoomLevel = _centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 			_mapMaxYByZoomLevel = (_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
 
-			mapVerticalLimitInUnits = (int)(ScreenBoundaries.top * 2.0f);
 			mapHorizontalLimitInUnits = (int)(ScreenBoundaries.right * 2.0f);
 		}
 
@@ -594,7 +583,7 @@ namespace OSM
 				MoveOtherLayerToMap();
 				ReplicateOtherLayer();
 				ResetOtherLayerScale();
-				CheckInsideScreenInitially();
+				CheckCurrentLayerWithinScreenLimits(false);
 			});						
 		}
 #endregion
@@ -875,7 +864,7 @@ namespace OSM
 
 			Vector3 topLeftCurrentTile = currentLayerCenterTile.transform.position;
 			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
-			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;						
+			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
 						
 			_mapDeviationCorrection.x = transform.position.x - (topLeftOtherTile.x + topLeftCurrentTile.x);
 			_mapDeviationCorrection.y = transform.position.y - (topLeftOtherTile.y + topLeftCurrentTile.y);
@@ -909,11 +898,11 @@ namespace OSM
 			}						
 		}
 
-		public void CheckCurrentLayerWithinScreenLimits()
+		public void CheckCurrentLayerWithinScreenLimits(bool pConsiderMovement = true)
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if (_isMovingLeft && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
+				if ((_isMovingLeft || pConsiderMovement == false) && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -923,7 +912,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (_isMovingRight && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
+				if ((_isMovingRight || pConsiderMovement == false) && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
@@ -933,7 +922,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);					
 				}
 
-				if (_isMovingUp && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
+				if ((_isMovingUp || pConsiderMovement == false) && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -943,7 +932,7 @@ namespace OSM
 					PrepareTileDataDownload(tile);
 				}
 
-				if (_isMovingDown && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
+				if ((_isMovingDown || pConsiderMovement == false) && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
@@ -954,67 +943,13 @@ namespace OSM
 				}
 			}
 
-			if (_isStopped == false)
+			if (_isStopped == false && pConsiderMovement == true)
 			{
 				UpdateMarkers();
 			}
 		}
 
-		private void CheckInsideScreenInitially()
-		{
-			foreach (Tile tile in CurrentLayer.Tiles)
-			{
-				if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
-				{
-					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
-					_helperVector3.y = 0;
-					_helperVector3.z = 0;
-
-					tile.transform.localPosition += _helperVector3;
-					PrepareTileDataDownload(tile);
-				}
-
-				if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
-				{
-					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
-					_helperVector3.y = 0;
-					_helperVector3.z = 0;
-
-					tile.transform.localPosition -= _helperVector3;
-					PrepareTileDataDownload(tile);
-				}
-
-				if (tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
-				{
-					_helperVector3.x = 0;
-					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
-					_helperVector3.z = 0;
-
-					tile.transform.localPosition -= _helperVector3;
-					PrepareTileDataDownload(tile);
-				}
-
-				if (tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
-				{
-					_helperVector3.x = 0;
-					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
-					_helperVector3.z = 0;
-
-					tile.transform.localPosition += _helperVector3;
-					PrepareTileDataDownload(tile);
-				}
-			}						
-		}
-
-		private void ForcePrepareDownload()
-		{
-			foreach (Tile tile in CurrentLayer.Tiles)
-			{
-				PrepareTileDataDownload(tile);
-			}
-		}
-
-		private Tile GetTileByVectorPoint(Vector3 pPoint)
+		private Tile GetTileByVectorPointForMarker(Vector3 pPoint)
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
@@ -1043,28 +978,6 @@ namespace OSM
 			}
 
 			return null;
-		}
-
-		//TODO: Refactor later to remove instantiations
-		private void SpawnMarker(double pLatitude, double pLongitude)
-		{			
-			Point3Double tileP = OSMGeoHelper.GeoToTilePosDouble(pLatitude, pLongitude, _currentZoomLevel);
-
-			int z = tileP.zoomLevel;
-			int x = (int)tileP.x;
-			int y = (int)tileP.y;
-
-			Vector3 insideTile = new Vector3((float)tileP.x - x, (float)tileP.y - y);
-
-			Tile tile = GetTileByPoint3(x, y);
-
-			if (tile != null)
-			{
-				insideTile = new Vector3(tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS + TILE_SIZE_IN_UNITS * insideTile.x,
-													 tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS - TILE_SIZE_IN_UNITS * insideTile.y, 0);
-
-				Marker mark = MarkerManager.Instance.CreateMarker(insideTile);
-			}
 		}
 
 		//TODO: Do no update everytime we move the map
@@ -1114,14 +1027,6 @@ namespace OSM
 				Vector3 worldPoint = MarkerManager.Instance.CanvasToWorldPosition(m.Image.rectTransform, m.transform.position) * pMultiplier;
 				TweenManager.Instance.Move(m.gameObject, MarkerManager.Instance.WorldToCanvasPosition(worldPoint), _scalingMoveSpeedForMarkers);
 			}
-		}
-
-		private bool CheckObjectOutsideScreenLimits(Vector3 pVectorPoint)
-		{
-			return pVectorPoint.x < ScreenBoundaries.left ||
-				   pVectorPoint.x > ScreenBoundaries.right ||
-				   pVectorPoint.y < ScreenBoundaries.bottom ||
-				   pVectorPoint.y > ScreenBoundaries.top;
 		}
 
 		public void ResetLayerContainerPosition()
@@ -1192,9 +1097,11 @@ namespace OSM
 				Destroy(LayerReplica.gameObject);
 			}
 
-			OtherLayer.ChangeToBackLayer();
 			LayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
 			LayerReplica.ChangeToMiddleLayer();
+
+			CurrentLayer.ChangeToFrontLayer();
+			OtherLayer.ChangeToBackLayer();
 		}
 	}
 }
