@@ -46,6 +46,7 @@ MonoBehaviour:
   _mainCamera: {fileID: 0}
   _canvas: {fileID: 224920578280397462}
   _markers: []
+  _map: {fileID: 0}
 --- !u!114 &114730653738466120
 MonoBehaviour:
   m_ObjectHideFlags: 1

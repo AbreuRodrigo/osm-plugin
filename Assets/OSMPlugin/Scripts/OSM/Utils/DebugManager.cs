@@ -93,8 +93,8 @@ namespace OSM
 					{
 						mp = _mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, _mainCamera.transform.position.z * -1));
 
-						if (tile.transform.position.x + Map.TILE_HALF_SIZE_IN_UNITS > mp.x && tile.transform.position.x - Map.TILE_HALF_SIZE_IN_UNITS < mp.x &&
-							tile.transform.position.y + Map.TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - Map.TILE_HALF_SIZE_IN_UNITS < mp.y)
+						if (tile.transform.position.x + Consts.TILE_HALF_SIZE_IN_UNITS > mp.x && tile.transform.position.x - Consts.TILE_HALF_SIZE_IN_UNITS < mp.x &&
+							tile.transform.position.y + Consts.TILE_HALF_SIZE_IN_UNITS > mp.y && tile.transform.position.y - Consts.TILE_HALF_SIZE_IN_UNITS < mp.y)
 						{
 							tile._meshRenderer.material.color = Color.green;
 						}

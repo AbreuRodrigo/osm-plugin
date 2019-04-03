@@ -6,21 +6,7 @@ using UnityEngine;
 namespace OSM
 {
 	public class Map : MonoBehaviour
-	{
-		#region Constants
-		public const string CURRENT_LAYER = "CurrentLayer";
-		public const string OTHER_LAYER = "OtherLayer";
-		
-		public const int MIN_ZOOM_LEVEL = 3;
-		public const int MAX_ZOOM_LEVEL = 19;
-
-		public const int TILE_SIZE_IN_PIXELS = 256;
-		public const float TILE_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.01f;
-		public const float TILE_HALF_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.005f;
-		public const float TILE_QUARTER_SIZE_IN_UNITS = TILE_SIZE_IN_PIXELS * 0.0025f;
-		public const string LAYER_BASE_NAME = "Layer";
-		#endregion
-				
+	{				
 		[Header("Layer Properties")]
 		[SerializeField]
 		private List<LayerConfig> layerConfigs;
@@ -36,13 +22,12 @@ namespace OSM
 
 		[Header("Dependencies")]
 		public Camera mainCamera;
-		public GameObject _world;
 
 		[SerializeField]
-		[Range(MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL)]
-		private int _currentZoomLevel = MIN_ZOOM_LEVEL;
+		[Range(Consts.MIN_ZOOM_LEVEL, Consts.MAX_ZOOM_LEVEL)]
+		private int _currentZoomLevel = Consts.MIN_ZOOM_LEVEL;
 
-		private float _previousZoomLevel = MIN_ZOOM_LEVEL;
+		private float _previousZoomLevel = Consts.MIN_ZOOM_LEVEL;
 
 		[Header("Prefabs")]
 		[SerializeField]
@@ -62,8 +47,7 @@ namespace OSM
 		private float _tileValidationCounter = 0;
 		private float _fadingDurationForLayers = 0.5f;
 		private float _scalingDurationForLayers = 0.5f;
-		private float _scalingMoveSpeedForMarkers = 0.125f;
-
+		
 		public int _tileCycleLimit;
 
 		public ScreenBoundaries ScreenBoundaries { get; private set; }
@@ -83,17 +67,10 @@ namespace OSM
 		[SerializeField]
 		private TileData _centerTileData;
 		private Vector3 _helperVector3;
-		private Vector3 _insideTilePosition;
-
+		
 		private bool _onZoomTransition;
 		private float _zoomTransitionTimer;
 		private Action _onCompleteZoomInTransition;
-
-		private bool _isPlacingMarker;
-
-		private float _tapCoolDown = 0.5f;
-		private float _tapTiming;
-		private int _tapCounter;
 
 		//Vars
 		private int _distX = 0;
@@ -102,7 +79,7 @@ namespace OSM
 		private int _nextY = 0;
 		private int _correctionX = 0;
 
-		public float zoomMultiplier = 1;
+		private float _zoomMultiplicationFactor = 1;
 
 		[SerializeField]
 		private GameObject _layerContainer;
@@ -118,11 +95,11 @@ namespace OSM
 
 		private void Start()
 		{
-			ApplyPinchZoom(zoomMultiplier);
+			ApplyPinchZoom(_zoomMultiplicationFactor);
 
 			if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
 			{
-				Application.targetFrameRate = 60;
+				Application.targetFrameRate = Consts.TARGET_FRAME_RATE;
 			}
 
 			StopMovements();
@@ -146,88 +123,10 @@ namespace OSM
 
 			_tileValidationCounter += Time.deltaTime;
 
-			RunZoomInTransactionTimeLogic();				
-			
-			ProcessMarkerSpawningInput();
+			RunZoomInTransactionTimeLogic();
 
-			if (_isPlacingMarker)
-			{
-				Vector3 point = mainCamera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, mainCamera.transform.position.z * -1));
-				
-				Tile tile = GetTileByVectorPointForMarker(point);
-
-				float tileXTopLeft = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS;
-				float tileYTopLeft = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS;
-
-				Vector3 positionInTile = point - new Vector3(tileXTopLeft, tileYTopLeft, 0);
-				positionInTile.y *= -1;
-
-				positionInTile /= TILE_SIZE_IN_UNITS;
-
-				Coordinates coords = OSMGeoHelper.TileToGeoPos(tile.TileData.x + positionInTile.x, tile.TileData.y + positionInTile.y, tile.TileData.zoom);
-
-				Marker marker = MarkerManager.Instance.CreateMarkerFallingDown(point);
-				marker.GeoCoordinates = coords;
-
-				_isPlacingMarker = false;
-			}
-		}
-
-		private void ProcessMarkerSpawningInput()
-		{
-#if UNITY_ANDROID
-
-			if (Input.touchCount == 1)
-			{
-				if (Input.GetTouch(0).phase == TouchPhase.Began)
-				{
-					_tapCounter++;
-				}
-			}
-
-			if (_tapCounter > 0)
-			{
-				_tapTiming += Time.deltaTime;
-			}
-
-			if (_tapCounter == 2)
-			{
-				if (_tapTiming <= _tapCoolDown)
-				{
-					_isPlacingMarker = true;
-				}
-
-				_tapCounter = 0;
-				_tapTiming = 0;
-			}
-#endif
-#if UNITY_EDITOR
-
-			if (Input.GetMouseButtonUp(0))
-			{
-				_tapCounter++;
-			}
-
-			if (_tapCounter > 0)
-			{
-				_tapTiming += Time.deltaTime;
-			}
-
-			if (_tapCounter == 2)
-			{
-				if (_tapTiming <= _tapCoolDown)
-				{
-					_isPlacingMarker = true;
-				}
-
-				_tapCounter = 0;
-				_tapTiming = 0;
-			}
-			else 
-			{
-				_isPlacingMarker = false;
-			}
-#endif
+			MarkerManager.Instance.ProcessMarkerSpawningInput();
+			MarkerManager.Instance.CheckMarkersPlacement();
 		}
 
 		private void RunZoomInTransactionTimeLogic()
@@ -251,7 +150,7 @@ namespace OSM
 		private void InitializeMap()
 		{
 			//Tile size base should be multiplied because it will be used to organize the tiles side by side and it considers the tile bounds to do so
-			TileSize = TILE_SIZE_IN_UNITS * zoomMultiplier;
+			TileSize = Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor;
 		}
 
 		private void InitializeLayers()
@@ -270,12 +169,12 @@ namespace OSM
 				if (CurrentLayer == null)
 				{
 					CurrentLayer = layer;
-					CurrentLayer.gameObject.name = CURRENT_LAYER;
+					CurrentLayer.gameObject.name = Consts.CURRENT_LAYER;
 				}
 				else if (OtherLayer == null)
 				{
 					OtherLayer = layer;
-					OtherLayer.gameObject.name = OTHER_LAYER;
+					OtherLayer.gameObject.name = Consts.OTHER_LAYER;
 				}
 
 				layerIndex++;
@@ -292,8 +191,8 @@ namespace OSM
 				{
 					if (pUseExactCenter == true)
 					{
-						if (tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS <= 0)
+						if (tile.transform.position.x - Consts.TILE_HALF_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_HALF_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + Consts.TILE_HALF_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_HALF_SIZE_IN_UNITS <= 0)
 						{
 							return tile;
 						}
@@ -301,8 +200,8 @@ namespace OSM
 					else
 					{
 						if (tile.X % 2 == 0 && tile.Y % 2 == 0 &&
-							tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+							tile.transform.position.x - Consts.TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + Consts.TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_SIZE_IN_UNITS <= 0)
 						{
 							return tile;
 						}
@@ -323,8 +222,8 @@ namespace OSM
 				{
 					if (pUseExactCenter == true)
 					{
-						if (tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+						if (tile.transform.position.x - Consts.TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + Consts.TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_SIZE_IN_UNITS <= 0)
 						{
 							return tile;
 						}
@@ -332,8 +231,8 @@ namespace OSM
 					else
 					{
 						if (tile.X % 2 == 0 && tile.Y % 2 == 0 &&
-							tile.transform.position.x - TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + TILE_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - TILE_SIZE_IN_UNITS <= 0)
+							tile.transform.position.x - Consts.TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_SIZE_IN_UNITS >= 0 &&
+							tile.transform.position.y + Consts.TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_SIZE_IN_UNITS <= 0)
 						{
 							return tile;
 						}
@@ -397,8 +296,8 @@ namespace OSM
 
 			_tileCycleLimit = (int)Mathf.Pow(2, _currentZoomLevel) - 1;
 
-			_mapMinYByZoomLevel = (_centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS) * zoomMultiplier;
-			_mapMaxYByZoomLevel = ((_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS) * zoomMultiplier;
+			_mapMinYByZoomLevel = (_centerTileData.y * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * _zoomMultiplicationFactor;
+			_mapMaxYByZoomLevel = ((_tileCycleLimit - _centerTileData.y) * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * _zoomMultiplicationFactor;
 
 			mapHorizontalLimitInUnits = (int)(ScreenBoundaries.right * 2.0f);
 		}
@@ -427,16 +326,16 @@ namespace OSM
 
 		protected bool ValidateZoomLimits()
 		{
-			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
+			if (_currentZoomLevel < Consts.MIN_ZOOM_LEVEL)
 			{
-				_currentZoomLevel = MIN_ZOOM_LEVEL;
+				_currentZoomLevel = Consts.MIN_ZOOM_LEVEL;
 
 				return false;
 			}
 
-			if (_currentZoomLevel > MAX_ZOOM_LEVEL)
+			if (_currentZoomLevel > Consts.MAX_ZOOM_LEVEL)
 			{
-				_currentZoomLevel = MAX_ZOOM_LEVEL;
+				_currentZoomLevel = Consts.MAX_ZOOM_LEVEL;
 
 				return false;
 			}
@@ -456,14 +355,14 @@ namespace OSM
 		
 		public void InitialZoom()
 		{
-			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
+			if (_currentZoomLevel < Consts.MIN_ZOOM_LEVEL)
 			{
-				_currentZoomLevel = MIN_ZOOM_LEVEL;
+				_currentZoomLevel = Consts.MIN_ZOOM_LEVEL;
 			}
 
-			if (_currentZoomLevel > MAX_ZOOM_LEVEL)
+			if (_currentZoomLevel > Consts.MAX_ZOOM_LEVEL)
 			{
-				_currentZoomLevel = MAX_ZOOM_LEVEL;
+				_currentZoomLevel = Consts.MAX_ZOOM_LEVEL;
 			}
 
 			NextZoomLevel = _currentZoomLevel;
@@ -485,8 +384,8 @@ namespace OSM
 
 			Debug.Log("New CurrentZoomLevel is " + intVal);
 
-			zoomMultiplier = pZoomScale;
-			_world.transform.localScale = new Vector3(zoomMultiplier, zoomMultiplier, 1);
+			_zoomMultiplicationFactor = pZoomScale;
+			transform.localScale = new Vector3(_zoomMultiplicationFactor, _zoomMultiplicationFactor, 1);
 
 			CalculateScreenBoundaries();
 		}
@@ -519,7 +418,7 @@ namespace OSM
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
 
-			UpdateMarkersOnZoom(2);
+			MarkerManager.Instance.UpdateMarkersOnZoom(2);
 
 			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale * 2, _scalingDurationForLayers, TweenType.ExponentialOut, true, null, () =>
 			{
@@ -604,7 +503,7 @@ namespace OSM
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
 
-			UpdateMarkersOnZoom(0.5f);
+			MarkerManager.Instance.UpdateMarkersOnZoom(0.5f);
 
 			TweenManager.Instance.ScaleTo(_layerContainer.gameObject, _layerContainer.transform.localScale / 2, _scalingDurationForLayers, TweenType.ExponentialOut, true, null, () => 
 			{
@@ -688,8 +587,8 @@ namespace OSM
 		private void PrepareTileDataBeforeDownload(Tile tile)
 		{
 			//Position of the tile in the world space - the current position of the map in the space, multiplied by the size in units to have proportionally the size of the tile taken in consideration
-			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / (TILE_SIZE_IN_UNITS * zoomMultiplier));
-			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / (TILE_SIZE_IN_UNITS * zoomMultiplier));
+			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / (Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor));
+			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / (Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor));
 						
 			_nextX = _centerTileData.x + _distX;
 			_nextY = _centerTileData.y - _distY;
@@ -727,9 +626,9 @@ namespace OSM
 			}
 		}
 
-		public bool CheckTileOnScreen(Vector3 tilePosition, float size = TILE_HALF_SIZE_IN_UNITS)
+		public bool CheckTileOnScreen(Vector3 tilePosition, float size = Consts.TILE_HALF_SIZE_IN_UNITS)
 		{
-			size *= zoomMultiplier;
+			size *= _zoomMultiplicationFactor;
 
 			return tilePosition.x + size >= ScreenBoundaries.left &&
 				   tilePosition.x - size <= ScreenBoundaries.right &&
@@ -746,8 +645,8 @@ namespace OSM
 
 				foreach (Tile tile in CurrentLayer.Tiles)
 				{
-					x = _centerTileData.x + (int)(tile.transform.position.x / (TILE_SIZE_IN_UNITS * zoomMultiplier));//tile x position for tile size scale
-					y = _centerTileData.y + (int)(tile.transform.position.y / (TILE_SIZE_IN_UNITS * zoomMultiplier)) * -1;//tile y position for tile size scale
+					x = _centerTileData.x + (int)(tile.transform.position.x / (Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor));//tile x position for tile size scale
+					y = _centerTileData.y + (int)(tile.transform.position.y / (Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor)) * -1;//tile y position for tile size scale
 
 					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, x, y);
 
@@ -762,10 +661,10 @@ namespace OSM
 			{
 				_auxLayer = CurrentLayer;
 				CurrentLayer = OtherLayer;
-				CurrentLayer.gameObject.name = CURRENT_LAYER;
+				CurrentLayer.gameObject.name = Consts.CURRENT_LAYER;
 
 				OtherLayer = _auxLayer;
-				OtherLayer.gameObject.name = OTHER_LAYER;
+				OtherLayer.gameObject.name = Consts.OTHER_LAYER;
 
 				CurrentLayer.ChangeToFrontLayer();
 				OtherLayer.ChangeToBackLayer();
@@ -787,13 +686,13 @@ namespace OSM
 
 			//By this time other is already the one in focus, because the layers were already swaped, meaning that this was the current before that
 			Vector3 topLeftOtherTile = otherLayerMainTile.transform.position;
-			topLeftOtherTile.x -= TILE_HALF_SIZE_IN_UNITS * pZoomScale;
-			topLeftOtherTile.y += TILE_HALF_SIZE_IN_UNITS * pZoomScale;
+			topLeftOtherTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS * pZoomScale;
+			topLeftOtherTile.y += Consts.TILE_HALF_SIZE_IN_UNITS * pZoomScale;
 						
 			//This is the one that should be referenced by the other above
 			Vector3 topLeftCurrentTile = currentLayerMainTile.transform.position;
-			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
-			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += Consts.TILE_HALF_SIZE_IN_UNITS;
 
 			_mapDeviationCorrection.x = topLeftOtherTile.x - topLeftCurrentTile.x + transform.position.x;
 			_mapDeviationCorrection.y = topLeftOtherTile.y - topLeftCurrentTile.y + transform.position.y;
@@ -805,8 +704,8 @@ namespace OSM
 
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				x = (int)((tile.transform.localPosition.x - currentLayerMainTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - currentLayerMainTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+				x = (int)((tile.transform.localPosition.x - currentLayerMainTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerMainTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
@@ -828,12 +727,12 @@ namespace OSM
 			}
 
 			Vector3 topLeftOtherTile = otherLayerCenterTile.transform.position;
-			topLeftOtherTile.x -= TILE_SIZE_IN_UNITS;
-			topLeftOtherTile.y += TILE_SIZE_IN_UNITS;
+			topLeftOtherTile.x -= Consts.TILE_SIZE_IN_UNITS;
+			topLeftOtherTile.y += Consts.TILE_SIZE_IN_UNITS;
 
 			Vector3 topLeftCurrentTile = currentLayerCenterTile.transform.position;
-			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
-			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += Consts.TILE_HALF_SIZE_IN_UNITS;
 
 			_mapDeviationCorrection.x = topLeftOtherTile.x - topLeftCurrentTile.x;
 			_mapDeviationCorrection.y = topLeftOtherTile.y - topLeftCurrentTile.y;
@@ -845,8 +744,8 @@ namespace OSM
 
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
@@ -868,13 +767,13 @@ namespace OSM
 			}
 
 			Vector3 topLeftOtherTile = otherLayerCenterTile.transform.position;
-			topLeftOtherTile.x -= TILE_QUARTER_SIZE_IN_UNITS;
-			topLeftOtherTile.y += TILE_QUARTER_SIZE_IN_UNITS;
+			topLeftOtherTile.x -= Consts.TILE_QUARTER_SIZE_IN_UNITS;
+			topLeftOtherTile.y += Consts.TILE_QUARTER_SIZE_IN_UNITS;
 			topLeftOtherTile *= -1;
 
 			Vector3 topLeftCurrentTile = currentLayerCenterTile.transform.position;
-			topLeftCurrentTile.x -= TILE_HALF_SIZE_IN_UNITS;
-			topLeftCurrentTile.y += TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS;
+			topLeftCurrentTile.y += Consts.TILE_HALF_SIZE_IN_UNITS;
 						
 			_mapDeviationCorrection.x = transform.position.x - (topLeftOtherTile.x + topLeftCurrentTile.x);
 			_mapDeviationCorrection.y = transform.position.y - (topLeftOtherTile.y + topLeftCurrentTile.y);
@@ -886,8 +785,8 @@ namespace OSM
 
 			foreach(Tile tile in CurrentLayer.Tiles)
 			{
-				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / TILE_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / TILE_SIZE_IN_UNITS) * -1;
+				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
+				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
@@ -912,9 +811,9 @@ namespace OSM
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if ((_isMovingLeft || pConsiderMovement == false) && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * zoomMultiplier < ScreenBoundaries.left)
+				if ((_isMovingLeft || pConsiderMovement == false) && tile.transform.position.x + Consts.TILE_HALF_SIZE_IN_UNITS * _zoomMultiplicationFactor < ScreenBoundaries.left)
 				{
-					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
+					_helperVector3.x = CurrentLayer.Config.width * Consts.TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
 					_helperVector3.z = 0;
 
@@ -922,9 +821,9 @@ namespace OSM
 					PrepareTileDataBeforeDownload(tile);
 				}
 
-				if ((_isMovingRight || pConsiderMovement == false) && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * zoomMultiplier > ScreenBoundaries.right)
+				if ((_isMovingRight || pConsiderMovement == false) && tile.transform.position.x - Consts.TILE_HALF_SIZE_IN_UNITS * _zoomMultiplicationFactor > ScreenBoundaries.right)
 				{
-					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
+					_helperVector3.x = CurrentLayer.Config.width * Consts.TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
 					_helperVector3.z = 0;
 
@@ -932,20 +831,20 @@ namespace OSM
 					PrepareTileDataBeforeDownload(tile);					
 				}
 
-				if ((_isMovingUp || pConsiderMovement == false) && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * zoomMultiplier > ScreenBoundaries.top)
+				if ((_isMovingUp || pConsiderMovement == false) && tile.transform.position.y - Consts.TILE_HALF_SIZE_IN_UNITS * _zoomMultiplicationFactor > ScreenBoundaries.top)
 				{
 					_helperVector3.x = 0;
-					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
+					_helperVector3.y = CurrentLayer.Config.height * Consts.TILE_SIZE_IN_UNITS;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition -= _helperVector3;
 					PrepareTileDataBeforeDownload(tile);
 				}
 
-				if ((_isMovingDown || pConsiderMovement == false) && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * zoomMultiplier < ScreenBoundaries.bottom)
+				if ((_isMovingDown || pConsiderMovement == false) && tile.transform.position.y + Consts.TILE_HALF_SIZE_IN_UNITS * _zoomMultiplicationFactor < ScreenBoundaries.bottom)
 				{
 					_helperVector3.x = 0;
-					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
+					_helperVector3.y = CurrentLayer.Config.height * Consts.TILE_SIZE_IN_UNITS;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition += _helperVector3;
@@ -955,18 +854,18 @@ namespace OSM
 
 			if (_isStopped == false && pConsiderMovement == true)
 			{
-				UpdateMarkers();
+			 	MarkerManager.Instance.UpdateMarkers(_currentZoomLevel);
 			}
 		}
 
-		private Tile GetTileByVectorPointForMarker(Vector3 pPoint)
+		public Tile GetTileByVectorPoint(Vector3 pPoint)
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
 				if (CheckTileOnScreen(tile.transform.position))
 				{
-					if (tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS > pPoint.x && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS < pPoint.x &&
-						tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS > pPoint.y && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS < pPoint.y)
+					if (tile.transform.position.x + Consts.TILE_HALF_SIZE_IN_UNITS > pPoint.x && tile.transform.position.x - Consts.TILE_HALF_SIZE_IN_UNITS < pPoint.x &&
+						tile.transform.position.y + Consts.TILE_HALF_SIZE_IN_UNITS > pPoint.y && tile.transform.position.y - Consts.TILE_HALF_SIZE_IN_UNITS < pPoint.y)
 					{
 						return tile;
 					}
@@ -976,7 +875,7 @@ namespace OSM
 			return null;
 		}
 
-		private Tile GetTileByPoint3(int x, int y)
+		public Tile GetTileByPoint3(int x, int y)
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
@@ -988,55 +887,6 @@ namespace OSM
 			}
 
 			return null;
-		}
-
-		//TODO: Do no update everytime we move the map
-		private void UpdateMarkers()
-		{
-			foreach(Marker marker in MarkerManager.Instance.Markers)
-			{
-				if (marker.Active)
-				{
-					Point3Double tileP = OSMGeoHelper.GeoToTilePosDouble(marker.Latitude, marker.Longitude, _currentZoomLevel);
-
-					int z = tileP.zoomLevel;
-					int x = (int) tileP.x;
-					int y = (int) tileP.y;
-
-					_insideTilePosition.x = (float) tileP.x - x;
-					_insideTilePosition.y = (float) tileP.y - y;
-
-					Tile tile = GetTileByPoint3(x, y);						
-
-					if (tile != null)
-					{
-						if(marker.Visible == false)
-						{
-							marker.FadeIn();
-						}
-
-						_insideTilePosition.x = tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS + TILE_SIZE_IN_UNITS * _insideTilePosition.x;
-						_insideTilePosition.y = tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS - TILE_SIZE_IN_UNITS * _insideTilePosition.y;
-
-						marker.transform.position = MarkerManager.Instance.WorldToCanvasPosition(_insideTilePosition);
-					}
-					else if(marker.Visible == true && 
-						(marker.transform.position.x + 0.1f < 0 || marker.transform.position.x - 0.1f > Screen.width ||
-						 marker.transform.position.y + 0.1f < 0 || marker.transform.position.y - 0.1f > Screen.height))
-					{
-						marker.FadeOut();
-					}
-				}
-			}
-		}
-
-		private void UpdateMarkersOnZoom(float pMultiplier)
-		{
-			foreach(Marker m in MarkerManager.Instance.Markers)
-			{
-				Vector3 worldPoint = MarkerManager.Instance.CanvasToWorldPosition(m.Image.rectTransform, m.transform.position) * pMultiplier;
-				TweenManager.Instance.Move(m.gameObject, MarkerManager.Instance.WorldToCanvasPosition(worldPoint), _scalingMoveSpeedForMarkers);
-			}
 		}
 
 		public void ResetLayerContainerPosition()
