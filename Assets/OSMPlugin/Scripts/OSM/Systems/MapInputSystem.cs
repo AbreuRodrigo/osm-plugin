@@ -30,6 +30,8 @@ namespace OSM
 		private Map _map;
 		[SerializeField]
 		private Camera _mainCamera;
+		[SerializeField]
+		private GameObject _world;
 
 		private bool _isPressed;
 		private Vector3 _clickDistance;
@@ -46,6 +48,8 @@ namespace OSM
 		private bool _isZooming = false;
 		[SerializeField]
 		private int _zoomGapOnPinch = 3;
+		[SerializeField]
+		private bool _useWorldZoom;
 
 		private void Start()
 		{
@@ -305,7 +309,14 @@ namespace OSM
 
 				_initialMapZoom = _map.CurrentZoomLevel;
 
-				_initialScale = _map.transform.localScale;
+				if (_useWorldZoom == true)
+				{
+					_initialScale = _world.transform.localScale;
+				}
+				else
+				{
+					_initialScale = _map.transform.localScale;
+				}
 
 				_targetScale = _initialScale * _zoomLevel.scale;
 
@@ -340,15 +351,15 @@ namespace OSM
 					_zoomPercent = 1.0f;
 				}
 
-				//if (_useWorldZoom == true)
+				if (_useWorldZoom == true)
 				{
 					Vector3 factor = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
 					_map.ApplyPinchZoom(factor.x);
 				}
-				/*else
+				else
 				{
 					_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
-				}*/
+				}
 			}
 		}
 						
@@ -500,8 +511,8 @@ namespace OSM
 				accumulator = Consts.MIN_ZOOM_LEVEL;
 			}
 
-			if((isZoomingInWithButton == true || isZoomingOutWithButton == true) &&
-				accumulator >= Consts.MIN_ZOOM_LEVEL)
+			if(_world != null && _useWorldZoom == true && accumulator >= Consts.MIN_ZOOM_LEVEL && 
+			  (isZoomingInWithButton == true || isZoomingOutWithButton == true))
 			{
 				_map.ApplyPinchZoom(accumulator - (Consts.MIN_ZOOM_LEVEL - 1));
 			}

@@ -22,6 +22,7 @@ namespace OSM
 
 		[Header("Dependencies")]
 		public Camera mainCamera;
+		public GameObject _world;
 
 		[SerializeField]
 		[Range(Consts.MIN_ZOOM_LEVEL, Consts.MAX_ZOOM_LEVEL)]
@@ -377,15 +378,17 @@ namespace OSM
 			int intVal = (int)pZoomScale;
 			float fraction = pZoomScale - intVal;
 
-			/*if (fraction > 0.5f)
+			intVal += 2;
+
+			if (fraction >= 0.5f)
 			{
 				intVal++;
-			}*/
+			}
 
 			Debug.Log("New CurrentZoomLevel is " + intVal);
 
 			_zoomMultiplicationFactor = pZoomScale;
-			transform.localScale = new Vector3(_zoomMultiplicationFactor, _zoomMultiplicationFactor, 1);
+			_world.transform.localScale = new Vector3(_zoomMultiplicationFactor, _zoomMultiplicationFactor, 1);
 
 			CalculateScreenBoundaries();
 		}
