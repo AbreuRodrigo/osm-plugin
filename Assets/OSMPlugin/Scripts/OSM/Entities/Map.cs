@@ -478,10 +478,10 @@ namespace OSM
 			int intVal = (int)pZoomScale;
 			float fraction = pZoomScale - intVal;
 
-			if (fraction > 0.5f)
+			/*if (fraction > 0.5f)
 			{
 				intVal++;
-			}
+			}*/
 
 			Debug.Log("New CurrentZoomLevel is " + intVal);
 
@@ -1122,9 +1122,9 @@ namespace OSM
 			}
 
 			LayerReplica = Instantiate(CurrentLayer.gameObject, transform).GetComponent<Layer>();
-			LayerReplica.ChangeToMiddleLayer();
 
 			CurrentLayer.ChangeToFrontLayer();
+			LayerReplica.ChangeToMiddleLayer();
 			OtherLayer.ChangeToBackLayer();
 		}
 	}

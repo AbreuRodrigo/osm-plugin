@@ -63,5 +63,6 @@ MonoBehaviour:
   _zoomSpeed: 0
   _isZooming: 0
   _zoomGapOnPinch: 3
-  userPinchSimulatorForZoom: 0
-  useButtonsForZoom: 1
+  _worldZoom: 1
+  userPinchSimulatorForZoom: 1
+  useButtonsForZoom: 0

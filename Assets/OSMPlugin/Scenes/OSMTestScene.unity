@@ -303,13 +303,8 @@ Prefab:
       objectReference: {fileID: 2090255408}
     - target: {fileID: 114198074959577086, guid: c13d303a0dc012143951bf1aafca1431,
         type: 2}
-      propertyPath: useButtonsForZoom
+      propertyPath: _worldZoom
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114198074959577086, guid: c13d303a0dc012143951bf1aafca1431,
-        type: 2}
-      propertyPath: userPinchSimulatorForZoom
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c13d303a0dc012143951bf1aafca1431, type: 2}
