@@ -353,6 +353,11 @@ Prefab:
       propertyPath: m_RootOrder
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 114306709229226438, guid: 52b52e8bd40622245be4a3fb3d2480fe,
+        type: 2}
+      propertyPath: _cacheAllTexturesAfterDownloading
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 52b52e8bd40622245be4a3fb3d2480fe, type: 2}
   m_IsPrefabAsset: 0
@@ -936,6 +941,11 @@ Prefab:
       propertyPath: _layerContainer
       value: 
       objectReference: {fileID: 1233942308}
+    - target: {fileID: 114169103650093720, guid: 6289f45519c15194a8eb634cb8ecb8b3,
+        type: 2}
+      propertyPath: _currentZoomLevel
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6289f45519c15194a8eb634cb8ecb8b3, type: 2}
   m_IsPrefabAsset: 0

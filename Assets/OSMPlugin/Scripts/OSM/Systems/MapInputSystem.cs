@@ -307,7 +307,8 @@ namespace OSM
 
 				_initialMapZoom = _map.CurrentZoomLevel;
 
-				_initialScale = _map.LayerContainer.localScale;
+				//_initialScale = _world.transform.localScale;
+				_initialScale = _map.transform.localScale;
 				_targetScale = _initialScale * _zoomLevel.scale;
 
 				_map.MoveCurrentLayerToContainer();
@@ -342,6 +343,9 @@ namespace OSM
 				}
 
 				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+
+				//Vector3 factor = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+				//_map.ApplyPinchZoom(factor.x);
 			}
 		}
 						

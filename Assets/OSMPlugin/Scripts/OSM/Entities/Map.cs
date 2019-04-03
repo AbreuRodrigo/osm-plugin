@@ -118,7 +118,7 @@ namespace OSM
 
 		private void Start()
 		{
-			_world.transform.localScale = new Vector3(zoomMultiplier, zoomMultiplier, 1);
+			ApplyPinchZoom(zoomMultiplier);
 
 			if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
 			{
@@ -250,12 +250,8 @@ namespace OSM
 
 		private void InitializeMap()
 		{
-			TileSize = _tileTemplate.TileSize.x;
-
-			if (TileSize == 0)
-			{
-				TileSize = TILE_SIZE_IN_PIXELS;
-			}
+			//Tile size base should be multiplied because it will be used to organize the tiles side by side and it considers the tile bounds to do so
+			TileSize = TILE_SIZE_IN_UNITS * zoomMultiplier;
 		}
 
 		private void InitializeLayers()
@@ -394,15 +390,15 @@ namespace OSM
 			return centerTile;
 		}
 
-
+		//Multiplier is correct in this one already, it should only multiply the final calculated value for mapMinYByZoomLevel and mapMaxYByZoomLevel
 		public void CalculateScreenBoundaries()
 		{
 			ScreenBoundaries = new ScreenBoundaries(mainCamera);
 
 			_tileCycleLimit = (int)Mathf.Pow(2, _currentZoomLevel) - 1;
 
-			_mapMinYByZoomLevel = _centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
-			_mapMaxYByZoomLevel = (_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS;
+			_mapMinYByZoomLevel = (_centerTileData.y * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS) * zoomMultiplier;
+			_mapMaxYByZoomLevel = ((_tileCycleLimit - _centerTileData.y) * TILE_SIZE_IN_UNITS + TILE_HALF_SIZE_IN_UNITS) * zoomMultiplier;
 
 			mapHorizontalLimitInUnits = (int)(ScreenBoundaries.right * 2.0f);
 		}
@@ -457,15 +453,7 @@ namespace OSM
 		{
 			ExecuteZooming(-1);
 		}
-
-		private void ForcePrepareTilesForDownload()
-		{
-			foreach (Tile tile in CurrentLayer.Tiles)
-			{
-				PrepareTileDataDownload(tile);
-			}
-		}
-
+		
 		public void InitialZoom()
 		{
 			if (_currentZoomLevel < MIN_ZOOM_LEVEL)
@@ -482,6 +470,25 @@ namespace OSM
 
 			DefineCenterTileOnCurrentLayer();
 			DownloadInitialTiles();
+		}
+
+		//TODO TEMP: Keep reviewing later, probably this method will replace all the other zoom control methods
+		public void ApplyPinchZoom(float pZoomScale)
+		{
+			int intVal = (int)pZoomScale;
+			float fraction = pZoomScale - intVal;
+
+			if (fraction > 0.5f)
+			{
+				intVal++;
+			}
+
+			Debug.Log("New CurrentZoomLevel is " + intVal);
+
+			zoomMultiplier = pZoomScale;
+			_world.transform.localScale = new Vector3(zoomMultiplier, zoomMultiplier, 1);
+
+			CalculateScreenBoundaries();
 		}
 
 		public void ExecuteZooming(int pZoomLevel = 0)
@@ -678,11 +685,12 @@ namespace OSM
 			_centerTileData = CurrentLayer.CenterTile.TileData;
 		}
 
-		private void PrepareTileDataDownload(Tile tile)
+		private void PrepareTileDataBeforeDownload(Tile tile)
 		{
-			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / TILE_SIZE_IN_UNITS);
-			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / TILE_SIZE_IN_UNITS);
-
+			//Position of the tile in the world space - the current position of the map in the space, multiplied by the size in units to have proportionally the size of the tile taken in consideration
+			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / (TILE_SIZE_IN_UNITS * zoomMultiplier));
+			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / (TILE_SIZE_IN_UNITS * zoomMultiplier));
+						
 			_nextX = _centerTileData.x + _distX;
 			_nextY = _centerTileData.y - _distY;
 
@@ -721,6 +729,8 @@ namespace OSM
 
 		public bool CheckTileOnScreen(Vector3 tilePosition, float size = TILE_HALF_SIZE_IN_UNITS)
 		{
+			size *= zoomMultiplier;
+
 			return tilePosition.x + size >= ScreenBoundaries.left &&
 				   tilePosition.x - size <= ScreenBoundaries.right &&
 				   tilePosition.y + size >= ScreenBoundaries.bottom &&
@@ -736,8 +746,8 @@ namespace OSM
 
 				foreach (Tile tile in CurrentLayer.Tiles)
 				{
-					x = _centerTileData.x + (int)(tile.transform.localPosition.x / TILE_SIZE_IN_UNITS);//tile x position for tile size scale
-					y = _centerTileData.y + (int)(tile.transform.localPosition.y / TILE_SIZE_IN_UNITS) * -1;//tile y position for tile size scale
+					x = _centerTileData.x + (int)(tile.transform.position.x / (TILE_SIZE_IN_UNITS * zoomMultiplier));//tile x position for tile size scale
+					y = _centerTileData.y + (int)(tile.transform.position.y / (TILE_SIZE_IN_UNITS * zoomMultiplier)) * -1;//tile y position for tile size scale
 
 					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, x, y);
 
@@ -902,44 +912,44 @@ namespace OSM
 		{
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				if ((_isMovingLeft || pConsiderMovement == false) && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.left)
+				if ((_isMovingLeft || pConsiderMovement == false) && tile.transform.position.x + TILE_HALF_SIZE_IN_UNITS * zoomMultiplier < ScreenBoundaries.left)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition += _helperVector3;
-					PrepareTileDataDownload(tile);
+					PrepareTileDataBeforeDownload(tile);
 				}
 
-				if ((_isMovingRight || pConsiderMovement == false) && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.right)
+				if ((_isMovingRight || pConsiderMovement == false) && tile.transform.position.x - TILE_HALF_SIZE_IN_UNITS * zoomMultiplier > ScreenBoundaries.right)
 				{
 					_helperVector3.x = CurrentLayer.Config.width * TILE_SIZE_IN_UNITS;
 					_helperVector3.y = 0;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition -= _helperVector3;
-					PrepareTileDataDownload(tile);					
+					PrepareTileDataBeforeDownload(tile);					
 				}
 
-				if ((_isMovingUp || pConsiderMovement == false) && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS > ScreenBoundaries.top)
+				if ((_isMovingUp || pConsiderMovement == false) && tile.transform.position.y - TILE_HALF_SIZE_IN_UNITS * zoomMultiplier > ScreenBoundaries.top)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition -= _helperVector3;
-					PrepareTileDataDownload(tile);
+					PrepareTileDataBeforeDownload(tile);
 				}
 
-				if ((_isMovingDown || pConsiderMovement == false) && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS < ScreenBoundaries.bottom)
+				if ((_isMovingDown || pConsiderMovement == false) && tile.transform.position.y + TILE_HALF_SIZE_IN_UNITS * zoomMultiplier < ScreenBoundaries.bottom)
 				{
 					_helperVector3.x = 0;
 					_helperVector3.y = CurrentLayer.Config.height * TILE_SIZE_IN_UNITS;
 					_helperVector3.z = 0;
 
 					tile.transform.localPosition += _helperVector3;
-					PrepareTileDataDownload(tile);
+					PrepareTileDataBeforeDownload(tile);
 				}
 			}
 
@@ -1098,6 +1108,20 @@ namespace OSM
 			}
 
 			LayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
+			LayerReplica.ChangeToMiddleLayer();
+
+			CurrentLayer.ChangeToFrontLayer();
+			OtherLayer.ChangeToBackLayer();
+		}
+
+		private void ReplicateCurrentLayer()
+		{
+			if (LayerReplica != null)
+			{
+				Destroy(LayerReplica.gameObject);
+			}
+
+			LayerReplica = Instantiate(CurrentLayer.gameObject, transform).GetComponent<Layer>();
 			LayerReplica.ChangeToMiddleLayer();
 
 			CurrentLayer.ChangeToFrontLayer();
