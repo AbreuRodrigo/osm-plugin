@@ -298,7 +298,7 @@ namespace OSM
 		{
 			ScreenBoundaries = new ScreenBoundaries(mainCamera);
 
-			_tileCycleLimit = (int)Mathf.Pow(2, _currentZoomLevel) - 1;
+			_tileCycleLimit = (int) Mathf.Pow(2, _currentZoomLevel) - 1;
 
 			_mapMinYByZoomLevel = (_centerTileData.y * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * _zoomMultiplicationFactor;
 			_mapMaxYByZoomLevel = ((_tileCycleLimit - _centerTileData.y) * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * _zoomMultiplicationFactor;
@@ -378,7 +378,7 @@ namespace OSM
 		//TODO TEMP: Keep reviewing later, probably this method will replace all the other zoom control methods
 		public void ApplyPinchZoom(float pZoomScale)
 		{
-			calculatedNextZoomLevel = (int)pZoomScale;
+			calculatedNextZoomLevel = (int) pZoomScale;
 			float fraction = pZoomScale - calculatedNextZoomLevel;
 
 			calculatedNextZoomLevel += 2;
@@ -446,7 +446,7 @@ namespace OSM
 
 				CalculateScreenBoundaries();
 
-				ReplicateOtherLayer();
+				//ReplicateOtherLayer();
 			});
 		}
 
@@ -455,8 +455,6 @@ namespace OSM
 		{
 			_currentZoomLevel += pZoomLevel;
 
-			//float fractionDiff = pFractionalScale - pZoomScale;
-
 			if (ValidateZoomLimits() == false)
 			{
 				return;
@@ -464,7 +462,7 @@ namespace OSM
 
 			if (pZoomLevel > 0)
 			{
-				DoZoomIn2(pZoomScale, pFractionalScale);
+				DoZoomIn2(pZoomScale);
 			}
 			else if (pZoomLevel < 0)
 			{
@@ -472,14 +470,16 @@ namespace OSM
 			}
 		}
 
-		private void DoZoomIn2(int pZoomScale = 1, float pScaleFraction = 1)
-		{						
+		private void DoZoomIn2(int pZoomScale = 1)
+		{
 			OtherLayer.FadeOut(0);
-						
-			StartReferencingLayersTilesPosition();
+									
+			//StartReferencingLayersTilesPosition();
 						
 			ResetLayerContainerPosition();
-			ResetOtherLayerPosition();
+
+			//ResetOtherLayerPosition();
+
 			MoveCurrentLayerToContainer();
 						
 			ResetMapPosition();
@@ -488,20 +488,22 @@ namespace OSM
 						
 			SwapLayers();
 
-			MoveOtherLayerToContainer();
+			ReplicateOtherLayer();
+			MoveReplicaLayerToContainer();
 
 			ReferenceTilesBetweenLayersOnZoomInByPinch(pZoomScale);
-						
-			transform.position = _mapDeviationCorrection;
-						
+
+			transform.position = _mapDeviationCorrection;			
+
 			CalculateScreenBoundaries();
-					
-			PrepareZoomInTransition(()=> 
+
+			MoveReplicaLayerToMap();
+
+			PrepareZoomInTransition(() =>
 			{
 				MoveOtherLayerToMap();
 				ResetOtherLayerScale();
 				CheckCurrentLayerWithinScreenLimits(false);
-				ReplicateOtherLayer();
 			});
 		}
 #endregion
@@ -537,7 +539,7 @@ namespace OSM
 
 				CalculateScreenBoundaries();
 
-				ReplicateOtherLayer();
+				//ReplicateOtherLayer();
 			});
 		}
 
@@ -623,7 +625,7 @@ namespace OSM
 			DoTileDownload(tile.TileData);
 		}
 
-		private void DoTileDownload(TileData pTileData)
+		private void DoTileDownload(TileData pTileData, float delay = 0)
 		{
 			if (pTileData.x < 0 || pTileData.y < 0)
 			{
@@ -634,7 +636,7 @@ namespace OSM
 				TileDownloadManager.Instance.DownloadTileImage(pTileData.name, (Texture2D texture) =>
 				{
 					CurrentLayer.SetTexture(pTileData.index, texture);
-				});
+				}, delay);
 			}
 		}
 
@@ -691,11 +693,6 @@ namespace OSM
 			Tile otherLayerMainTile = GetCenterTileOnOtherLayerByPinch();
 			Tile currentLayerMainTile = GetCenterTileOnCurrentLayerByPinch();
 
-			if (otherLayerMainTile == null || currentLayerMainTile == null)
-			{
-				return;
-			}
-
 			//By this time other is already the one in focus, because the layers were already swaped, meaning that this was the current before that
 			Vector3 topLeftOtherTile = otherLayerMainTile.transform.position;
 			topLeftOtherTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS * pZoomScale;
@@ -721,7 +718,7 @@ namespace OSM
 
 				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
 
-				if (CheckTileOnScreen(tile.transform.position))
+				//if (CheckTileOnScreen(tile.transform.position))
 				{
 					DoTileDownload(tile.TileData);
 				}				
@@ -929,6 +926,23 @@ namespace OSM
 		{
 			transform.position = Vector3.zero;
 		}
+
+		private void MoveReplicaLayerToContainer()
+		{
+			if (LayerReplica != null && _layerContainer != null)
+			{
+				LayerReplica.transform.SetParent(_layerContainer.transform);
+			}
+		}
+
+		private void MoveReplicaLayerToMap()
+		{
+			if (LayerReplica != null)
+			{
+				LayerReplica.transform.SetParent(transform);
+			}
+		}
+
 
 		public void MoveCurrentLayerToContainer()
 		{

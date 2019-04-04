@@ -419,7 +419,7 @@ namespace OSM
 			}
 			else
 			{
-				_initialScale = _map.transform.localScale;
+				_initialScale = Vector3.one;//_map.transform.localScale;
 			}
 
 			_targetScale = _initialScale * _zoomLevel.scale;

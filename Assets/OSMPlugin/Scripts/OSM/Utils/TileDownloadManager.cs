@@ -59,13 +59,15 @@ namespace OSM
 
 		#region Methods
 
-		public void DownloadTileImage(string pTileName, Action<Texture2D> pOnCompleteDownloading)
+		public void DownloadTileImage(string pTileName, Action<Texture2D> pOnCompleteDownloading, float delay = 0)
 		{
-			StartCoroutine(DownloadTileByName(pTileName, pOnCompleteDownloading));
+			StartCoroutine(DownloadTileByName(pTileName, pOnCompleteDownloading, delay));
 		}
 
-		private IEnumerator DownloadTileByName(string pTileName, Action<Texture2D> pOnCompleteDownloading)
+		private IEnumerator DownloadTileByName(string pTileName, Action<Texture2D> pOnCompleteDownloading, float delay = 0)
 		{
+			yield return new WaitForSeconds(delay);
+
 			Texture2D texture = null;
 
 			//Getting the texture from the cached textures
