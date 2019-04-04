@@ -65,6 +65,8 @@ namespace OSM
 		public float TileSize { get; private set; }
 		public float CurrentZoomLevel { get { return _currentZoomLevel; } }
 
+		public int calculatedNextZoomLevel;
+
 		[SerializeField]
 		private TileData _centerTileData;
 		private Vector3 _helperVector3;
@@ -80,6 +82,7 @@ namespace OSM
 		private int _nextY = 0;
 		private int _correctionX = 0;
 
+		[SerializeField]
 		private float _zoomMultiplicationFactor = 1;
 
 		[SerializeField]
@@ -375,17 +378,17 @@ namespace OSM
 		//TODO TEMP: Keep reviewing later, probably this method will replace all the other zoom control methods
 		public void ApplyPinchZoom(float pZoomScale)
 		{
-			int intVal = (int)pZoomScale;
-			float fraction = pZoomScale - intVal;
+			calculatedNextZoomLevel = (int)pZoomScale;
+			float fraction = pZoomScale - calculatedNextZoomLevel;
 
-			intVal += 2;
+			calculatedNextZoomLevel += 2;
 
 			if (fraction >= 0.5f)
 			{
-				intVal++;
+				calculatedNextZoomLevel++;
 			}
 
-			Debug.Log("New CurrentZoomLevel is " + intVal);
+			Debug.Log("New CurrentZoomLevel is " + calculatedNextZoomLevel);
 
 			_zoomMultiplicationFactor = pZoomScale;
 			_world.transform.localScale = new Vector3(_zoomMultiplicationFactor, _zoomMultiplicationFactor, 1);
@@ -416,7 +419,7 @@ namespace OSM
 		{
 			OtherLayer.FadeOut(0);
 
-			StartReferencingLayers();
+			StartReferencingLayersTilesPosition();
 			ResetLayerContainerPosition();
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
@@ -448,9 +451,11 @@ namespace OSM
 		}
 
 #region TEMP
-		public void ExecuteZoomingWithPinch(int pZoomLevel = 0, int pZoomScale = 1)
+		public void ExecuteZoomingWithPinch(int pZoomLevel = 0, int pZoomScale = 1, float pFractionalScale = 0)
 		{
 			_currentZoomLevel += pZoomLevel;
+
+			//float fractionDiff = pFractionalScale - pZoomScale;
 
 			if (ValidateZoomLimits() == false)
 			{
@@ -459,7 +464,7 @@ namespace OSM
 
 			if (pZoomLevel > 0)
 			{
-				DoZoomIn2(pZoomScale);
+				DoZoomIn2(pZoomScale, pFractionalScale);
 			}
 			else if (pZoomLevel < 0)
 			{
@@ -467,33 +472,37 @@ namespace OSM
 			}
 		}
 
-		private void DoZoomIn2(int pZoomScale = 1)
-		{			
+		private void DoZoomIn2(int pZoomScale = 1, float pScaleFraction = 1)
+		{						
 			OtherLayer.FadeOut(0);
-
-			StartReferencingLayers();
+						
+			StartReferencingLayersTilesPosition();
+						
 			ResetLayerContainerPosition();
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
-
-			ResetMapPosition();
-			OtherLayer.OrganizeTilesAsGrid();
-
-			SwapLayers();
 						
+			ResetMapPosition();
+						
+			OtherLayer.OrganizeTilesAsGrid();
+						
+			SwapLayers();
+
+			MoveOtherLayerToContainer();
+
 			ReferenceTilesBetweenLayersOnZoomInByPinch(pZoomScale);
-
+						
 			transform.position = _mapDeviationCorrection;
-
+						
 			CalculateScreenBoundaries();
 					
 			PrepareZoomInTransition(()=> 
 			{
 				MoveOtherLayerToMap();
-				ReplicateOtherLayer();
 				ResetOtherLayerScale();
 				CheckCurrentLayerWithinScreenLimits(false);
-			});						
+				ReplicateOtherLayer();
+			});
 		}
 #endregion
 
@@ -501,7 +510,7 @@ namespace OSM
 		{
 			OtherLayer.FadeOut(0);
 
-			StartReferencingLayers();
+			StartReferencingLayersTilesPosition();
 			ResetLayerContainerPosition();
 			ResetOtherLayerPosition();
 			MoveCurrentLayerToContainer();
@@ -800,7 +809,7 @@ namespace OSM
 			}
 		}
 
-		public void StartReferencingLayers()
+		public void StartReferencingLayersTilesPosition()
 		{
 			int total = OtherLayer.Tiles.Count;
 
@@ -975,9 +984,9 @@ namespace OSM
 			}
 
 			LayerReplica = Instantiate(CurrentLayer.gameObject, transform).GetComponent<Layer>();
+			LayerReplica.ChangeToMiddleLayer();
 
 			CurrentLayer.ChangeToFrontLayer();
-			LayerReplica.ChangeToMiddleLayer();
 			OtherLayer.ChangeToBackLayer();
 		}
 	}

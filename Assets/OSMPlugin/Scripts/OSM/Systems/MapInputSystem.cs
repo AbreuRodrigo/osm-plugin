@@ -294,72 +294,33 @@ namespace OSM
 		 */
 		private void ExecuteZoomProcedures()
 		{
-			int zoomDiff = (int) _map.CurrentZoomLevel + _zoomGapOnPinch;
-
-			if(zoomDiff > Consts.MAX_ZOOM_LEVEL)
+			if (_useWorldZoom == true)
 			{
-				_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
+				_zoomLevel = new ZoomLevel(_map.calculatedNextZoomLevel);
 			}
+			else
+			{
+				int zoomDiff = (int)_map.CurrentZoomLevel + _zoomGapOnPinch;
 
-			_zoomLevel = new ZoomLevel(_zoomGapOnPinch);
+				if (zoomDiff > Consts.MAX_ZOOM_LEVEL)
+				{
+					_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
+				}
+
+				_zoomLevel = new ZoomLevel(_zoomGapOnPinch);
+			}
 
 			if (_isZooming == false && _pinchBegun)
 			{
-				StartZoom();
-
-				_initialMapZoom = _map.CurrentZoomLevel;
-
-				if (_useWorldZoom == true)
-				{
-					_initialScale = _world.transform.localScale;
-				}
-				else
-				{
-					_initialScale = _map.transform.localScale;
-				}
-
-				_targetScale = _initialScale * _zoomLevel.scale;
-
-				_map.MoveCurrentLayerToContainer();
+				StartZoomProcess();
 			}
 			else if (_isZooming == true && _pinchEnd)
 			{
-				//TODO:  Work on the zoom fractions
-
-				EndZoom();
-
-				_layerContainerScale = (int) Mathf.Round(_map.LayerContainer.localScale.x);
-				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
-
-				_map.MoveCurrentLayerToMap();
-
-				StopLayerContainerScaling();
-
-				_zoomLevel.ResetLevel(_layerContainerScale);
-				_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale);
-
-				_pinchBegun = false;
-				_pinchEnd = false;
+				EndZoomProcess();
 			}
 			else if (_isZooming == true)
-			{				
-				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;
-				_zoomPercent = distance / _map.mapHorizontalLimitInUnits;
-
-				if(_zoomPercent > 1.0f)
-				{
-					_zoomPercent = 1.0f;
-				}
-
-				if (_useWorldZoom == true)
-				{
-					Vector3 factor = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
-					_map.ApplyPinchZoom(factor.x);
-				}
-				else
-				{
-					_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
-				}
+			{
+				UpdateZoomProcess();
 			}
 		}
 						
@@ -445,6 +406,77 @@ namespace OSM
 		/// </summary>
 
 		private bool _isScaling;
+
+		private void StartZoomProcess()
+		{
+			StartZoom();
+
+			_initialMapZoom = _map.CurrentZoomLevel;
+
+			if (_useWorldZoom == true)
+			{
+				_initialScale = _world.transform.localScale;
+			}
+			else
+			{
+				_initialScale = _map.transform.localScale;
+			}
+
+			_targetScale = _initialScale * _zoomLevel.scale;
+
+			_map.MoveCurrentLayerToContainer();
+		}
+
+		private void EndZoomProcess()
+		{
+			//TODO:  Work on the zoom fractions
+
+			EndZoom();
+
+			float fraction = _map.LayerContainer.localScale.x;
+
+			if (_useWorldZoom == true)
+			{
+				_layerContainerScale = _map.calculatedNextZoomLevel;
+				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
+			}
+			else
+			{
+				_layerContainerScale = (int)Mathf.Round(fraction);
+				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
+			}
+
+			_map.MoveCurrentLayerToMap();
+
+			StopLayerContainerScaling();
+
+			_zoomLevel.ResetLevel(_layerContainerScale);
+			_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale, fraction);
+
+			_pinchBegun = false;
+			_pinchEnd = false;
+		}
+
+		private void UpdateZoomProcess()
+		{
+			float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;
+			_zoomPercent = distance / _map.mapHorizontalLimitInUnits;
+
+			if (_zoomPercent > 1.0f)
+			{
+				_zoomPercent = 1.0f;
+			}
+
+			if (_useWorldZoom == true)
+			{
+				Vector3 factor = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+				_map.ApplyPinchZoom(factor.x);
+			}
+			else
+			{
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+			}
+		}
 
 		public void StartLayerContainerScalingEditor(Vector3 pInitPosition)
 		{

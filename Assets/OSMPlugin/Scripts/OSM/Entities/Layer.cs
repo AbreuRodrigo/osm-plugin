@@ -23,6 +23,9 @@ namespace OSM
 		private int _index;
 		[SerializeField]
 		private int _renderingOrder;
+		[SerializeField]
+		[Range(1, 0)]
+		private float _debugAlpha = 1;
 
 		private LayerConfig _config;
 
@@ -90,6 +93,8 @@ namespace OSM
 					_onCompleteFadingOut?.Invoke();
 				}
 			}
+
+			//SetAlpha(_debugAlpha);
 		}
 
 		public void AddTile(Tile pTile)
@@ -270,6 +275,14 @@ namespace OSM
 			foreach (Tile tile in _tiles)
 			{
 				tile.FadeIn(pDuration);
+			}
+		}
+
+		public void SetAlpha(float pAlpha)
+		{
+			foreach (Tile tile in _tiles)
+			{
+				tile.SetAlpha(pAlpha);
 			}
 		}
 

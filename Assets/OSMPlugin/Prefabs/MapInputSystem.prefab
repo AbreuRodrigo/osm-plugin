@@ -64,5 +64,5 @@ MonoBehaviour:
   _isZooming: 0
   _zoomGapOnPinch: 3
   _useWorldZoom: 0
-  userPinchSimulatorForZoom: 0
-  useButtonsForZoom: 1
+  userPinchSimulatorForZoom: 1
+  useButtonsForZoom: 0

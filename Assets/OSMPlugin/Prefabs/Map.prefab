@@ -73,10 +73,12 @@ MonoBehaviour:
     type: 2}
   _tileCycleLimit: 0
   mapHorizontalLimitInUnits: 0
+  calculatedNextZoomLevel: 0
   _centerTileData:
     index: 0
     zoom: 0
     x: 0
     y: 0
     name: 
+  _zoomMultiplicationFactor: 1
   _layerContainer: {fileID: 0}
