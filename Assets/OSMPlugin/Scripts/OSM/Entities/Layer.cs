@@ -94,7 +94,7 @@ namespace OSM
 				}
 			}
 
-			//SetAlpha(_debugAlpha);
+			SetAlpha(_debugAlpha);
 		}
 
 		public void AddTile(Tile pTile)
