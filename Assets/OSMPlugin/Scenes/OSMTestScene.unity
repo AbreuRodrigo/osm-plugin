@@ -613,6 +613,11 @@ Prefab:
       propertyPath: m_Pivot.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 223031079123853324, guid: aa81ac0bfa75b7d449e9af488a4d12aa,
+        type: 2}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 346407358}
     - target: {fileID: 114620557765415724, guid: aa81ac0bfa75b7d449e9af488a4d12aa,
         type: 2}
       propertyPath: _mainCamera
@@ -623,11 +628,6 @@ Prefab:
       propertyPath: _map
       value: 
       objectReference: {fileID: 158007833}
-    - target: {fileID: 223031079123853324, guid: aa81ac0bfa75b7d449e9af488a4d12aa,
-        type: 2}
-      propertyPath: m_Camera
-      value: 
-      objectReference: {fileID: 346407358}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aa81ac0bfa75b7d449e9af488a4d12aa, type: 2}
   m_IsPrefabAsset: 0

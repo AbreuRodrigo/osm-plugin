@@ -51,6 +51,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cb1d09d9e6d11046b07ff1c00abaa22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _currentZoomLevel: 3
+  _currentMapScale: 1
   layerConfigs:
   - type: 1
     layerOrder: 10
@@ -60,13 +62,13 @@ MonoBehaviour:
     layerOrder: 5
     width: 7
     height: 7
-  _currentLatitude: 49.2681
-  _currentLongitude: -123.1017
+  _initialLatitude: 49.2674573
+  _initialLongitude: -123.0930032
   _mapMinYByZoomLevel: 0
   _mapMaxYByZoomLevel: 0
   mainCamera: {fileID: 0}
   _world: {fileID: 0}
-  _currentZoomLevel: 3
+  _layerContainer: {fileID: 0}
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}
   _layerTemplate: {fileID: 114939389103965722, guid: e5a8b06161cb24f44a65ad28ad42379d,
@@ -81,4 +83,3 @@ MonoBehaviour:
     y: 0
     name: 
   _zoomMultiplicationFactor: 1
-  _layerContainer: {fileID: 0}

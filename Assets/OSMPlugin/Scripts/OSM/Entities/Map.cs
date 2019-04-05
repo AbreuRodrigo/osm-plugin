@@ -6,16 +6,23 @@ using UnityEngine;
 namespace OSM
 {
 	public class Map : MonoBehaviour
-	{				
+	{
+		[Header("Map Zooming")]
+		[SerializeField]
+		[Range(Consts.MIN_ZOOM_LEVEL, Consts.MAX_ZOOM_LEVEL)]
+		private int _currentZoomLevel = Consts.MIN_ZOOM_LEVEL;
+		[SerializeField]
+		private float _currentMapScale = 1;
+
 		[Header("Layer Properties")]
 		[SerializeField]
 		private List<LayerConfig> layerConfigs;
 
 		[Header("General Properties")]
 		[SerializeField]
-		private double _currentLatitude = 49.2674573;
+		private double _initialLatitude = 49.2674573;
 		[SerializeField]
-		private double _currentLongitude = -123.0930032;
+		private double _initialLongitude = -123.0930032;
 
 		public float _mapMinYByZoomLevel;
 		public float _mapMaxYByZoomLevel;
@@ -23,10 +30,15 @@ namespace OSM
 		[Header("Dependencies")]
 		public Camera mainCamera;
 		public GameObject _world;
-
 		[SerializeField]
-		[Range(Consts.MIN_ZOOM_LEVEL, Consts.MAX_ZOOM_LEVEL)]
-		private int _currentZoomLevel = Consts.MIN_ZOOM_LEVEL;
+		private GameObject _layerContainer;
+		public Transform LayerContainer
+		{
+			get
+			{
+				return _layerContainer.transform;
+			}
+		}
 
 		private float _previousZoomLevel = Consts.MIN_ZOOM_LEVEL;
 
@@ -85,16 +97,6 @@ namespace OSM
 		[SerializeField]
 		private float _zoomMultiplicationFactor = 1;
 
-		[SerializeField]
-		private GameObject _layerContainer;
-		public Transform LayerContainer
-		{
-			get
-			{
-				return _layerContainer.transform;
-			}
-		}
-
 		private Vector3 _mapDeviationCorrection;
 
 		private void Start()
@@ -134,7 +136,7 @@ namespace OSM
 
 			if(Input.GetKeyDown(KeyCode.C))
 			{
-				DebugCreateLayerByZoomLevel(5);
+				DebugCreateLayerByZoomLevel(3);
 			}
 		}
 
@@ -480,6 +482,8 @@ namespace OSM
 			_zoomMultiplicationFactor = multiplier;
 			//TEMP
 
+			_currentMapScale *= scale;
+
 			OtherLayer.FadeOut(0);
 
 			StartReferencingLayersTilesPosition();
@@ -536,6 +540,8 @@ namespace OSM
 
 		private void DoZoomIn2(int pZoomScale = 1, float pScaleFraction = 1)
 		{
+			_currentMapScale = pZoomScale;
+
 			OtherLayer.FadeOut(0);
 									
 			StartReferencingLayersTilesPosition();
@@ -574,6 +580,8 @@ namespace OSM
 
 		private void DoZoomOut()
 		{
+			_currentMapScale *= 0.5f;
+
 			OtherLayer.FadeOut(0);
 
 			StartReferencingLayersTilesPosition();
@@ -656,7 +664,7 @@ namespace OSM
 
 		private void DefineCenterTileOnCurrentLayer()
 		{
-			CurrentLayer.DefineCenterTile(_currentZoomLevel, _currentLatitude, _currentLongitude);
+			CurrentLayer.DefineCenterTile(_currentZoomLevel, _initialLatitude, _initialLongitude);
 			_centerTileData = CurrentLayer.CenterTile.TileData;
 		}
 
