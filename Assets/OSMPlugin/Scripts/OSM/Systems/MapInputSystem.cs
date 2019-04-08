@@ -30,8 +30,6 @@ namespace OSM
 		private Map _map;
 		[SerializeField]
 		private Camera _mainCamera;
-		[SerializeField]
-		private GameObject _world;
 
 		private bool _isPressed;
 		private Vector3 _clickDistance;
@@ -48,8 +46,6 @@ namespace OSM
 		private bool _isZooming = false;
 		[SerializeField]
 		private int _zoomGapOnPinch = 3;
-		[SerializeField]
-		private bool _useWorldZoom;
 
 		private void Start()
 		{
@@ -264,7 +260,7 @@ namespace OSM
 		private float _initialPinchDistance;
 
 		private ZoomLevel _zoomLevel;
-		private int _layerContainerScale;
+		private int _layerContainerScale = 1;
 
 		private float accumulator;
 		private bool isZoomingInWithButton;
@@ -294,21 +290,14 @@ namespace OSM
 		 */
 		private void ExecuteZoomProcedures()
 		{
-			if (_useWorldZoom == true)
-			{
-				_zoomLevel = new ZoomLevel(_map.calculatedNextZoomLevel);
-			}
-			else
-			{
-				int zoomDiff = (int)_map.CurrentZoomLevel + _zoomGapOnPinch;
+			int zoomDiff = (int)_map.CurrentZoomLevel + _zoomGapOnPinch;
 
-				if (zoomDiff > Consts.MAX_ZOOM_LEVEL)
-				{
-					_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
-				}
-
-				_zoomLevel = new ZoomLevel(_zoomGapOnPinch);
+			if (zoomDiff > Consts.MAX_ZOOM_LEVEL)
+			{
+				_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
 			}
+
+			_zoomLevel = new ZoomLevel(_zoomGapOnPinch);		
 
 			if (_isZooming == false && _pinchBegun)
 			{
@@ -411,16 +400,7 @@ namespace OSM
 		{
 			StartZoom();
 
-			_initialMapZoom = _map.CurrentZoomLevel;
-
-			if (_useWorldZoom == true)
-			{
-				_initialScale = _world.transform.localScale;
-			}
-			else
-			{
-				_initialScale = Vector3.one;//_map.transform.localScale;
-			}
+			_initialScale = _map.LayerContainer.localScale;
 
 			_targetScale = _initialScale * _zoomLevel.scale;
 
@@ -435,23 +415,17 @@ namespace OSM
 
 			float fraction = _map.LayerContainer.localScale.x;
 
-			if (_useWorldZoom == true)
-			{
-				_layerContainerScale = _map.calculatedNextZoomLevel;
-				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
-			}
-			else
-			{
-				_layerContainerScale = (int)Mathf.Round(fraction);
-				_layerContainerScale = ZoomSystem.GetSumByScale(_layerContainerScale);
-			}
+			int contScale = (int) Mathf.Round(fraction);
+			_layerContainerScale = ZoomSystem.GetSumByScale(contScale);
 
 			_map.MoveCurrentLayerToMap();
 
-			StopLayerContainerScaling();
-
+			StopLayerContainerScaling();						
+			
 			_zoomLevel.ResetLevel(_layerContainerScale);
 			_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale, fraction);
+
+			Debug.Log("Sum: " + _zoomLevel.sum + " scale: " + _zoomLevel.scale + " fraction: " + fraction);
 
 			_pinchBegun = false;
 			_pinchEnd = false;
@@ -467,15 +441,7 @@ namespace OSM
 				_zoomPercent = 1.0f;
 			}
 
-			if (_useWorldZoom == true)
-			{
-				Vector3 factor = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
-				_map.ApplyPinchZoom(factor.x);
-			}
-			else
-			{
-				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
-			}
+			_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
 		}
 
 		public void StartLayerContainerScalingEditor(Vector3 pInitPosition)
@@ -538,13 +504,12 @@ namespace OSM
 			{
 				accumulator = Consts.MAX_ZOOM_LEVEL;
 			}
-			if(accumulator < Consts.MIN_ZOOM_LEVEL)
+			if (accumulator < Consts.MIN_ZOOM_LEVEL)
 			{
 				accumulator = Consts.MIN_ZOOM_LEVEL;
 			}
 
-			if(_world != null && _useWorldZoom == true && accumulator >= Consts.MIN_ZOOM_LEVEL && 
-			  (isZoomingInWithButton == true || isZoomingOutWithButton == true))
+			if (accumulator >= Consts.MIN_ZOOM_LEVEL && (isZoomingInWithButton == true || isZoomingOutWithButton == true))
 			{
 				_map.ApplyPinchZoom(accumulator - (Consts.MIN_ZOOM_LEVEL - 1));
 			}

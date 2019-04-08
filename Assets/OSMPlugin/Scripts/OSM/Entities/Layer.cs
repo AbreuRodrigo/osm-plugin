@@ -37,9 +37,16 @@ namespace OSM
 		private float _fadeOutTimer = 0;
 		private float _fadeOutDuration = 0;
 
+		[SerializeField]
+		private float _mapScaleFraction;
+
+		[SerializeField]
+		private bool _enableSetAlpha;
+
 		public float TileSize { get { return _tileSize; } }
 		public int RenderingOrder { get { return _renderingOrder; } }
 		public TileData CenterTileData { get; set; }
+		public float MapScaleFraction { get { return _mapScaleFraction; } set { _mapScaleFraction = value; } }
 
 		private event Action _onCompleteFadingOut;
 
@@ -65,6 +72,11 @@ namespace OSM
 		}
 
 		public Tile CenterTile { get; private set; }
+
+		private void OnEnable()
+		{
+			MapScaleFraction = 1;
+		}
 
 		private void LateUpdate()
 		{
@@ -94,7 +106,10 @@ namespace OSM
 				}
 			}
 
-			SetAlpha(_debugAlpha);
+			if (_enableSetAlpha == true)
+			{
+				SetAlpha(_debugAlpha);
+			}
 		}
 
 		public void AddTile(Tile pTile)

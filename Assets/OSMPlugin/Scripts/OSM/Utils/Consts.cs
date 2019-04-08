@@ -7,6 +7,9 @@
 		public const string OTHER_LAYER = "OtherLayer";
 		public const string MARKER_NAME = "Marker";
 
+		public const float ONE_LEVEL_ZOOM_IN = 2;
+		public const float ONE_LEVEL_ZOOM_OUT = 0.5f;
+
 		public const int MIN_ZOOM_LEVEL = 3;
 		public const int MAX_ZOOM_LEVEL = 19;
 		public const int TILE_SIZE_IN_PIXELS = 256;

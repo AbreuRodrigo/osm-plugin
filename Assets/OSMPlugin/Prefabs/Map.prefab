@@ -52,22 +52,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _currentZoomLevel: 3
+  _previousZoomLevel: 0
   _currentMapScale: 1
   layerConfigs:
   - type: 1
     layerOrder: 10
-    width: 7
-    height: 7
+    width: 9
+    height: 9
   - type: 1
     layerOrder: 5
-    width: 7
-    height: 7
+    width: 9
+    height: 9
   _initialLatitude: 49.2674573
   _initialLongitude: -123.0930032
   _mapMinYByZoomLevel: 0
   _mapMaxYByZoomLevel: 0
   mainCamera: {fileID: 0}
-  _world: {fileID: 0}
   _layerContainer: {fileID: 0}
   _tileTemplate: {fileID: 114353460306461164, guid: fc707174bc236ab47a7b4040abbba065,
     type: 2}
@@ -83,3 +83,5 @@ MonoBehaviour:
     y: 0
     name: 
   _zoomMultiplicationFactor: 1
+  tempDoFullZoomCycle: 1
+  dontResetOtherLayer: 0
