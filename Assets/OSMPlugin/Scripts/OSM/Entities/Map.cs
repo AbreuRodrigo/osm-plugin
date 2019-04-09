@@ -802,8 +802,8 @@ namespace OSM
 
 			if (_debugUseTileColorGuide)
 			{
-				_otherLayerMainTile._meshRenderer.material.color = Color.green;
-				_currentLayerMainTile._meshRenderer.material.color = Color.red;
+				_otherLayerMainTile._meshRenderer.material.color = new Color(0.9f, 0.9f, 0.9f, 1);
+				_currentLayerMainTile._meshRenderer.material.color = new Color(0.89f, 0.69f, 0.62f, 1);//227,177,157
 			}						
 		}
 
