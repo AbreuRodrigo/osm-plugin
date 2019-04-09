@@ -79,7 +79,7 @@ namespace OSM
 		public int calculatedNextZoomLevel;
 
 		[SerializeField]
-		private TileData _centerTileData;
+		private TileData _referenceTileData;
 		private Vector3 _helperVector3;
 		
 		private bool _onZoomTransition;
@@ -105,6 +105,9 @@ namespace OSM
 
 		private Tile _otherLayerMainTile;
 		private Tile _currentLayerMainTile;
+
+		[SerializeField]
+		private bool _debugUseTileColorGuide;
 
 		private void Start()
 		{
@@ -368,8 +371,8 @@ namespace OSM
 
 			_tileCycleLimit = (int) Mathf.Pow(2, _currentZoomLevel) - 1;
 
-			_mapMinYByZoomLevel = (_centerTileData.y * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * CurrentLayer.MapScaleFraction;
-			_mapMaxYByZoomLevel = ((_tileCycleLimit - _centerTileData.y) * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * CurrentLayer.MapScaleFraction;
+			_mapMinYByZoomLevel = (_referenceTileData.y * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * CurrentLayer.MapScaleFraction;
+			_mapMaxYByZoomLevel = ((_tileCycleLimit - _referenceTileData.y) * Consts.TILE_SIZE_IN_UNITS + Consts.TILE_HALF_SIZE_IN_UNITS) * CurrentLayer.MapScaleFraction;
 
 			mapHorizontalLimitInUnits = (int)(ScreenBoundaries.right * 2.0f);
 		}
@@ -512,31 +515,36 @@ namespace OSM
 		}
 
 		#region TEMP
-		public void ExecuteZoomingWithPinch(int pZoomLevel = 0, int pZoomScale = 1, float pScaleFraction = 0)
+		public void ExecuteZoomingWithPinch(ZoomLevel pZoomLevel)
 		{
+			float pScaleFraction = LayerContainer.localScale.x;
+
 			_previousZoomLevel = _currentZoomLevel;
-			_currentZoomLevel += pZoomLevel;
+			_currentZoomLevel += pZoomLevel.sum;
 
 			if (ValidateZoomLimits() == false)
 			{
 				return;
 			}
 
-			if (pZoomLevel > 0 || (pZoomLevel == 0 && pScaleFraction > 1))
+			if (pZoomLevel.sum > 0 || (pZoomLevel.sum == 0 && pScaleFraction > 1))
 			{
-				DoZoomIn2(pZoomScale, pScaleFraction);
+				DoZoomIn2(pZoomLevel.sum, pZoomLevel.scale, pScaleFraction);
 			}
-			else if (pZoomLevel < 0)
+			else if (pZoomLevel.sum < 0)
 			{
 				DoZoom(Consts.ONE_LEVEL_ZOOM_OUT, ReferenceTilesBetweenLayersOnZoomOut);
 			}
 		}
 
-		private void DoZoomIn2(int pZoomScale = 1, float pObjectScale = 1)
+		private void DoZoomIn2(int pZoomLevel = 3, int pZoomScale = 1, float pObjectScale = 1)
 		{
 			//TODO -> zoom fraction scale for the next layer 
-			ZoomFraction zoomFraction = ZoomSystem.GetZoomScaleByObjectScale(pObjectScale);
-			
+			ZoomFraction zoomFraction = ZoomSystem.GetZoomScaleByObjectScale(CurrentLayer.transform.localScale.x);
+
+			Debug.Log("<color=#0F0>newZoomLevel: " + zoomFraction.zoomLevel + " scale: " + zoomFraction.zoomScale + " objectScale: " + zoomFraction.objectScale + " fraction: " + zoomFraction.scaleFraction + " finalScale: " + zoomFraction.zoomScale + "</color>");
+			Debug.Log("<color=#D90>sum: " + pZoomLevel + " scale: " + pZoomScale + " fraction: " + pObjectScale + " finalScale: " + zoomFraction.zoomScale + "</color>");
+
 			//_currentMapScale = zoomFraction.zoomScale;
 
 			if (zoomFraction.zoomLevel > _currentZoomLevel)
@@ -548,6 +556,7 @@ namespace OSM
 						
 			ResetLayerContainerScale();//Set the layerContainer back to localScale zero
 			ResetOtherLayerPosition();//Set the otherLayer back to localScale zero
+			ResetLayerContainerPosition();//Set the layerContainer back to position zero
 
 			MoveCurrentLayerToContainer();//Set the layerContainer as currentLayer parent
 						
@@ -559,7 +568,11 @@ namespace OSM
 			{
 				SwapLayers();//Swap the two layers, putting the current to be rendered on the front level and the other in the background
 
-				UpdateCurrentLayerWithZoomFraction(zoomFraction);
+				Debug.Log("pZoomFraction.zoomScale: " + zoomFraction.zoomScale);
+
+				CurrentLayer.MapScaleFraction = OtherLayer.transform.localScale.x / zoomFraction.zoomScale;
+				CurrentLayer.transform.localScale = new Vector3(CurrentLayer.MapScaleFraction, CurrentLayer.MapScaleFraction, 1);
+				OtherLayer.MapScaleFraction = 1;
 
 				ReferenceTilesBetweenLayersOnZoomInByPinch(zoomFraction);
 
@@ -582,14 +595,6 @@ namespace OSM
 			_onZoomTransition = true;
 			_zoomTransitionTimer = 1;
 			_onCompleteZoomInTransition = pOnComplete;
-		}
-
-		private void UpdateCurrentLayerWithZoomFraction(ZoomFraction pZoomFraction)
-		{
-			Debug.Log("pZoomFraction.zoomScale: " + pZoomFraction.zoomScale);
-
-			CurrentLayer.MapScaleFraction = OtherLayer.transform.localScale.x / pZoomFraction.zoomScale;
-			CurrentLayer.transform.localScale = new Vector3(CurrentLayer.MapScaleFraction, CurrentLayer.MapScaleFraction, 1);
 		}
 
 		private void UpdateZoomLevel()
@@ -637,7 +642,7 @@ namespace OSM
 		private void DefineCenterTileOnCurrentLayer()
 		{
 			CurrentLayer.DefineCenterTile(_currentZoomLevel, _initialLatitude, _initialLongitude);
-			_centerTileData = CurrentLayer.CenterTile.TileData;
+			_referenceTileData = CurrentLayer.CenterTile.TileData;
 		}
 
 		private void PrepareTileDataBeforeDownload(Tile tile)
@@ -646,8 +651,8 @@ namespace OSM
 			_distX = Mathf.RoundToInt((tile.transform.position.x - transform.position.x) / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction));
 			_distY = Mathf.RoundToInt((tile.transform.position.y - transform.position.y) / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction));
 						
-			_nextX = _centerTileData.x + _distX;
-			_nextY = _centerTileData.y - _distY;
+			_nextX = _referenceTileData.x + _distX;
+			_nextY = _referenceTileData.y - _distY;
 
 			if (_nextX > _tileCycleLimit)
 			{
@@ -716,8 +721,8 @@ namespace OSM
 
 				foreach (Tile tile in CurrentLayer.Tiles)
 				{
-					x = _centerTileData.x + (int)(tile.transform.position.x / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction));//tile x position for tile size scale
-					y = _centerTileData.y + (int)(tile.transform.position.y / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction)) * -1;//tile y position for tile size scale
+					x = _referenceTileData.x + (int)(tile.transform.position.x / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction));//tile x position for tile size scale
+					y = _referenceTileData.y + (int)(tile.transform.position.y / (Consts.TILE_SIZE_IN_UNITS * CurrentLayer.MapScaleFraction)) * -1;//tile y position for tile size scale
 
 					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, x, y);
 
@@ -747,11 +752,18 @@ namespace OSM
 		//TODO: Review later and remove the other one once this one is working properly
 		private void ReferenceTilesBetweenLayersOnZoomInByPinch(ZoomFraction pZoomFraction)
 		{
+			if (_debugUseTileColorGuide)
+			{
+				if (_otherLayerMainTile != null)
+					_otherLayerMainTile._meshRenderer.material.color = Color.white;
+				
+				if (_currentLayerMainTile != null)
+					_currentLayerMainTile._meshRenderer.material.color = Color.white;
+			}
+
 			_otherLayerMainTile = GetCenterTileOnOtherLayerByPinch();
 			_currentLayerMainTile = GetCenterTileOnCurrentLayerByPinch();
-
-			OtherLayer.MapScaleFraction = 1;
-
+						
 			//By this time other is already the one in focus, because the layers were already swaped, meaning that this was the current before that
 			Vector3 topLeftOtherTile = _otherLayerMainTile.transform.position;
 			topLeftOtherTile.x -= Consts.TILE_HALF_SIZE_IN_UNITS * OtherLayer.transform.localScale.x;
@@ -765,28 +777,34 @@ namespace OSM
 			_mapDeviationCorrection.x = topLeftOtherTile.x - topLeftCurrentTile.x + transform.position.x;
 			_mapDeviationCorrection.y = topLeftOtherTile.y - topLeftCurrentTile.y + transform.position.y;
 
-			int zoomInterval = (_currentZoomLevel - _previousZoomLevel) * 2;
+			int zoomInterval = (int) pZoomFraction.zoomScale;
 
-			_currentLayerMainTile.TileData = new TileData(_currentLayerMainTile.TileData.index, _currentZoomLevel, _otherLayerMainTile.TileData.x * zoomInterval, _otherLayerMainTile.TileData.y * zoomInterval);
-			_centerTileData = _currentLayerMainTile.TileData;
-
+			_referenceTileData = new TileData(_currentLayerMainTile.TileData.index, _currentZoomLevel, _otherLayerMainTile.TileData.x * zoomInterval, _otherLayerMainTile.TileData.y * zoomInterval);
+			_currentLayerMainTile.TileData = _referenceTileData;
+						
 			int x = 0, y = 0;
 
 			foreach (Tile tile in CurrentLayer.Tiles)
 			{
-				x = (int)((tile.transform.localPosition.x - _currentLayerMainTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - _currentLayerMainTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
-
-				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
-
-				//if (CheckTileOnScreen(tile.transform.position))
+				if (!tile.Equals(_referenceTileData))
 				{
-					DoTileDownload(tile.TileData);
+					x = (int)((tile.transform.localPosition.x - _currentLayerMainTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
+					y = (int)((tile.transform.localPosition.y - _currentLayerMainTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
+
+					tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _referenceTileData.x + x, _referenceTileData.y + y);
+
+					if (CheckTileOnScreen(tile.transform.position))
+					{
+						DoTileDownload(tile.TileData);
+					}
 				}
 			}
 
-			//_otherLayerMainTile._meshRenderer.material.color = Color.green;
-			//_currentLayerMainTile._meshRenderer.material.color = Color.red;
+			if (_debugUseTileColorGuide)
+			{
+				_otherLayerMainTile._meshRenderer.material.color = Color.green;
+				_currentLayerMainTile._meshRenderer.material.color = Color.red;
+			}						
 		}
 
 		private void ReferenceTilesBetweenLayersOnZoomIn(float pScale)
@@ -814,7 +832,7 @@ namespace OSM
 
 			//Multiplied by 2 because the tile proportion is always exactly (x * 2, y * 2) - Defining the center tile x and y 
 			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.TileData.index, _currentZoomLevel, otherLayerCenterTile.TileData.x * 2, otherLayerCenterTile.TileData.y * 2);
-			_centerTileData = currentLayerCenterTile.TileData;
+			_referenceTileData = currentLayerCenterTile.TileData;
 
 			int x = 0, y = 0;
 
@@ -823,7 +841,7 @@ namespace OSM
 				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
 				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
 
-				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _referenceTileData.x + x, _referenceTileData.y + y);
 
 				if (CheckTileOnScreen(tile.transform.position))
 				{
@@ -855,7 +873,7 @@ namespace OSM
 			_mapDeviationCorrection.y = transform.position.y - (topLeftOtherTile.y + topLeftCurrentTile.y);
 
 			currentLayerCenterTile.TileData = new TileData(currentLayerCenterTile.Index, _currentZoomLevel, otherLayerCenterTile.TileData.x / 2, otherLayerCenterTile.TileData.y / 2);
-			_centerTileData = currentLayerCenterTile.TileData;
+			_referenceTileData = currentLayerCenterTile.TileData;
 
 			int x = 0, y = 0;
 
@@ -864,7 +882,7 @@ namespace OSM
 				x = (int)((tile.transform.localPosition.x - currentLayerCenterTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
 				y = (int)((tile.transform.localPosition.y - currentLayerCenterTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
 
-				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _centerTileData.x + x, _centerTileData.y + y);
+				tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _referenceTileData.x + x, _referenceTileData.y + y);
 
 				if (CheckTileOnScreen(tile.transform.position))
 				{
@@ -960,6 +978,14 @@ namespace OSM
 			if (_layerContainer != null)
 			{
 				_layerContainer.transform.localScale = Vector3.one;
+			}
+		}
+
+		public void ResetLayerContainerPosition()
+		{
+			if (_layerContainer != null)
+			{
+				_layerContainer.transform.position = Vector3.zero;
 			}
 		}
 

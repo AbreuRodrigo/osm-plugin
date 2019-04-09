@@ -76,7 +76,7 @@ MonoBehaviour:
   _tileCycleLimit: 0
   mapHorizontalLimitInUnits: 0
   calculatedNextZoomLevel: 0
-  _centerTileData:
+  _referenceTileData:
     index: 0
     zoom: 0
     x: 0
@@ -85,3 +85,4 @@ MonoBehaviour:
   _zoomMultiplicationFactor: 1
   tempDoFullZoomCycle: 1
   dontResetOtherLayer: 0
+  _debugUseTileColorGuide: 1

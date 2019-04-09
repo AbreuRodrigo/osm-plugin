@@ -308,8 +308,12 @@ namespace OSM
 				EndZoomProcess();
 			}
 			else if (_isZooming == true)
-			{
+			{				
+				_layerContainerScale = ZoomSystem.GetSumByScale((int)Mathf.Round(_map.LayerContainer.localScale.x));
+				_zoomLevel.ResetLevel(_layerContainerScale);
 				UpdateZoomProcess();
+
+				Debug.Log("<color=#FF0>sum: " + _zoomLevel.sum + " scale: " + _zoomLevel.scale + " fraction: " + _map.LayerContainer.localScale.x + "</color>");
 			}
 		}
 						
@@ -400,9 +404,10 @@ namespace OSM
 		{
 			StartZoom();
 
-			_initialScale = _map.LayerContainer.localScale;
-
+			_initialScale = _map.LayerContainer.localScale;			
 			_targetScale = _initialScale * _zoomLevel.scale;
+
+			_map.LayerContainer.position = DebugManager.Instance.DebugMiddlePoint;
 
 			_map.MoveCurrentLayerToContainer();
 		}
@@ -413,9 +418,7 @@ namespace OSM
 
 			EndZoom();
 
-			float fraction = _map.LayerContainer.localScale.x;
-
-			int contScale = (int) Mathf.Round(fraction);
+			int contScale = (int) Mathf.Round(_map.LayerContainer.localScale.x);
 			_layerContainerScale = ZoomSystem.GetSumByScale(contScale);
 
 			_map.MoveCurrentLayerToMap();
@@ -423,10 +426,8 @@ namespace OSM
 			StopLayerContainerScaling();						
 			
 			_zoomLevel.ResetLevel(_layerContainerScale);
-			_map.ExecuteZoomingWithPinch(_zoomLevel.sum, _zoomLevel.scale, fraction);
-
-			Debug.Log("Sum: " + _zoomLevel.sum + " scale: " + _zoomLevel.scale + " fraction: " + fraction);
-
+			_map.ExecuteZoomingWithPinch(_zoomLevel);
+						
 			_pinchBegun = false;
 			_pinchEnd = false;
 		}

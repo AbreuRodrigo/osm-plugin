@@ -41,6 +41,8 @@ namespace OSM
 		[SerializeField]
 		private GameObject _debugMiddlePoint;
 
+		public Vector3 DebugMiddlePoint { get { return _debugMiddlePoint.transform.position; } }
+
 		private Vector3 _initialDebugPosition;
 
 		private Vector3 _lineMarker1;

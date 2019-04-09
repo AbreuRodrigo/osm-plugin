@@ -57,71 +57,71 @@ namespace OSM
 		{
 			int zoom = 0;
 
-			if (objectScale <= 1.5f)
+			if (objectScale < 1.5f)
 			{
 				zoom = 3;
 			}
-			else if (objectScale <= 2.5f)
+			else if (objectScale < 3)
 			{
 				zoom = 4;
 			}
-			else if (objectScale <= 4.5f)
+			else if (objectScale < 6)
 			{
 				zoom = 5;
 			}
-			else if (objectScale <= 8.5f)
+			else if (objectScale < 12)
 			{
 				zoom = 6;
 			}
-			else if (objectScale <= 16.5f)
+			else if (objectScale < 24)
 			{
 				zoom = 7;
 			}
-			else if (objectScale <= 32.5f)
+			else if (objectScale < 48)
 			{
 				zoom = 8;
 			}
-			else if (objectScale <= 64.5f)
+			else if (objectScale < 96)
 			{
 				zoom = 9;
 			}
-			else if (objectScale <= 128.5f)
+			else if (objectScale < 192)
 			{
 				zoom = 10;
 			}
-			else if (objectScale <= 256.5f)
+			else if (objectScale < 384)
 			{
 				zoom = 11;
 			}
-			else if (objectScale <= 512.5f)
+			else if (objectScale < 768)
 			{
 				zoom = 12;
 			}
-			else if (objectScale <= 1024.5f)
+			else if (objectScale < 1536)
 			{
 				zoom = 13;
 			}
-			else if (objectScale <= 2048.5f)
+			else if (objectScale < 3072)
 			{
 				zoom = 14;
 			}
-			else if (objectScale <= 4096.5f)
+			else if (objectScale < 6144)
 			{
 				zoom = 15;
 			}
-			else if (objectScale <= 8192.5f)
+			else if (objectScale < 12288)
 			{
 				zoom = 16;
 			}
-			else if (objectScale <= 16384.5f)
+			else if (objectScale < 24576)
 			{
 				zoom = 17;
 			}
-			else if (objectScale <= 32768.5f)
+			else if (objectScale < 49152)
 			{
 				zoom = 18;
 			}
-			else if (objectScale > 32768.5f)
+			else if (objectScale >= 49152)
 			{
 				zoom = 19;
 			}
