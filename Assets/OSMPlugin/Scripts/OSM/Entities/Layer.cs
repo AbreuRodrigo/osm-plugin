@@ -195,6 +195,12 @@ namespace OSM
 			return _myTiles[x, y].Index;
 		}
 
+		public void RecalculateMapScaling(float pScaling)
+		{
+			MapScaleFraction = pScaling;
+			transform.localScale = new Vector3(MapScaleFraction, MapScaleFraction, 1);
+		}
+
 		public void CreateTilesByLayer(Tile pTileTemplate, int pZoomLevel)
 		{
 			int tileIndex = 0;

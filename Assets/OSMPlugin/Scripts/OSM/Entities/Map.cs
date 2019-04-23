@@ -529,7 +529,7 @@ namespace OSM
 
 			if (pZoomLevel.sum > 0 || (pZoomLevel.sum == 0 && pScaleFraction > 1))
 			{
-				DoZoomIn2(pZoomLevel.sum, pZoomLevel.scale, pScaleFraction);
+				DoZoom2(pZoomLevel.sum, pZoomLevel.scale, pScaleFraction);
 			}
 			else if (pZoomLevel.sum < 0)
 			{
@@ -537,55 +537,51 @@ namespace OSM
 			}
 		}
 
-		private void DoZoomIn2(int pZoomLevel = 3, int pZoomScale = 1, float pObjectScale = 1)
+		private void DoZoom2(int pZoomLevel = 3, int pZoomScale = 1, float pObjectScale = 1)
 		{
 			//TODO -> zoom fraction scale for the next layer 
+
 			ZoomFraction zoomFraction = ZoomSystem.GetZoomScaleByObjectScale(CurrentLayer.transform.localScale.x);
 
 			Debug.Log("<color=#0F0>newZoomLevel: " + zoomFraction.zoomLevel + " scale: " + zoomFraction.zoomScale + " objectScale: " + zoomFraction.objectScale + " fraction: " + zoomFraction.scaleFraction + " finalScale: " + zoomFraction.zoomScale + "</color>");
 			Debug.Log("<color=#D90>sum: " + pZoomLevel + " scale: " + pZoomScale + " fraction: " + pObjectScale + " finalScale: " + zoomFraction.zoomScale + "</color>");
 
-			//_currentMapScale = zoomFraction.zoomScale;
+			_currentMapScale = zoomFraction.zoomScale;
 
 			if (zoomFraction.zoomLevel > _currentZoomLevel)
 			{
 				_currentZoomLevel = zoomFraction.zoomLevel;
 			}
-			
+
 			OtherLayer.FadeOut(0);
-						
-			ResetLayerContainerScale();//Set the layerContainer back to localScale zero
-			ResetOtherLayerPosition();//Set the otherLayer back to localScale zero
-			ResetLayerContainerPosition();//Set the layerContainer back to position zero
 
-			MoveCurrentLayerToContainer();//Set the layerContainer as currentLayer parent
-						
-			ResetMapPosition();//Set the map position back to position zero
-						
-			//OtherLayer.OrganizeTilesAsGrid();//Make sure to reset the structure of the otherLayer as a grid
+			ResetLayerContainerScale();
+			//ResetOtherLayerPosition();
+			//ResetLayerContainerPosition();
+			//ResetMapPosition();
 
-			if (tempDoFullZoomCycle)
+			OtherLayer.OrganizeTilesAsGrid();
+
+			if (tempDoFullZoomCycle == true)
 			{
-				SwapLayers();//Swap the two layers, putting the current to be rendered on the front level and the other in the background
+				//Swap the two layers, (current becomes other -> other becomes current) putting the current to be rendered on the front level and the other in the background
+				SwapLayers();
 
-				Debug.Log("pZoomFraction.zoomScale: " + zoomFraction.zoomScale);
+				CurrentLayer.RecalculateMapScaling( OtherLayer.transform.localScale.x / zoomFraction.zoomScale );
+				//OtherLayer.MapScaleFraction = 1;
 
-				CurrentLayer.MapScaleFraction = OtherLayer.transform.localScale.x / zoomFraction.zoomScale;
-				CurrentLayer.transform.localScale = new Vector3(CurrentLayer.MapScaleFraction, CurrentLayer.MapScaleFraction, 1);
-				OtherLayer.MapScaleFraction = 1;
+				//ReferenceTilesBetweenLayersOnZoomInByPinch(zoomFraction);
 
-				ReferenceTilesBetweenLayersOnZoomInByPinch(zoomFraction);
-
-				transform.position = _mapDeviationCorrection;
+				//transform.position = _mapDeviationCorrection;
 	
-				CalculateScreenBoundaries();
+				//CalculateScreenBoundaries();
 		
-				PrepareZoomInTransition(() =>
-				{
-					MoveOtherLayerToMap();
+				//PrepareZoomInTransition(() =>
+				//{
+					//MoveOtherLayerToMap();
 					//ResetOtherLayerScale();
-					CheckCurrentLayerWithinScreenLimits(false);
-				});
+					//CheckCurrentLayerWithinScreenLimits(false);
+				//});
 			}
 		}
 		#endregion

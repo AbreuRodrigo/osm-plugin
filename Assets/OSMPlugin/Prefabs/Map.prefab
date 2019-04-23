@@ -84,5 +84,5 @@ MonoBehaviour:
     name: 
   _zoomMultiplicationFactor: 1
   tempDoFullZoomCycle: 1
-  dontResetOtherLayer: 0
-  _debugUseTileColorGuide: 1
+  dontResetOtherLayer: 1
+  _debugUseTileColorGuide: 0
