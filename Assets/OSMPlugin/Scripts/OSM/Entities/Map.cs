@@ -124,7 +124,8 @@ namespace OSM
 			InitialZoom();
 
 			CalculateScreenBoundaries();
-			CheckCurrentLayerWithinScreenLimits(false);
+			//CheckCurrentLayerWithinScreenLimits(false);
+			CalculateTilesPositionAndUpdate();
 
 			DebugManager.Instance.CreateDebugFeatures();
 		}
@@ -346,7 +347,7 @@ namespace OSM
 			NextZoomLevel = _currentZoomLevel;
 
 			DefineCenterTileOnCurrentLayer();
-			DownloadInitialTiles();
+			//DownloadInitialTiles();
 		}
 
 		//TODO TEMP: Keep reviewing later, probably this method will replace all the other zoom control methods
