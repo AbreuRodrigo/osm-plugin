@@ -17,6 +17,8 @@ namespace OSM
 		private float _clearUnusedTexturesEachXSeconds = 5;
 		private float _clearTextureTime = 0;
 
+		private int _downloadCounterTemp = 0;
+
 		#region Properties
 		private static TileDownloadManager instance;
 		public static TileDownloadManager Instance
@@ -61,7 +63,11 @@ namespace OSM
 
 		public void DownloadTileImage(string pTileName, Action<Texture2D> pOnCompleteDownloading, float delay = 0)
 		{
+			_downloadCounterTemp++;
+
 			StartCoroutine(DownloadTileByName(pTileName, pOnCompleteDownloading, delay));
+
+			Debug.Log("Total Downloads: " + _downloadCounterTemp);
 		}
 
 		private IEnumerator DownloadTileByName(string pTileName, Action<Texture2D> pOnCompleteDownloading, float delay = 0)

@@ -265,7 +265,7 @@ namespace OSM
 			}
 		}
 
-		public void FadeOut(float pDuration, Action pOnComplete = null)
+		public void FadeOut(float pDuration = 0, Action pOnComplete = null)
 		{
 			if (_isFadingOut == false)
 			{	

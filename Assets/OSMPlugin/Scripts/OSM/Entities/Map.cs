@@ -118,7 +118,7 @@ namespace OSM
 				Application.targetFrameRate = Consts.TARGET_FRAME_RATE;
 			}
 
-			StopMovements();
+			ForceStopMovements();
 			InitializeMap();
 			InitializeLayers();
 			InitialZoom();
@@ -126,7 +126,7 @@ namespace OSM
 			CalculateScreenBoundaries();
 			CheckCurrentLayerWithinScreenLimits(false);
 
-			DebugManager.Instance.CreateDebugFeatures();			
+			DebugManager.Instance.CreateDebugFeatures();
 		}
 
 		private void LateUpdate()
@@ -143,71 +143,19 @@ namespace OSM
 
 			MarkerManager.Instance.ProcessMarkerSpawningInput();
 			MarkerManager.Instance.CheckMarkersPlacement();
-
-			if(Input.GetKeyDown(KeyCode.C))
-			{
-				DebugCreateLayerByZoomLevel(5);
-			}
-		}
-
-		private void DebugCreateLayerByZoomLevel(int zoomLevel)
-		{
-			LayerConfig layerConfig = new LayerConfig();
-			layerConfig.height = 7;
-			layerConfig.width = 7;
-			layerConfig.layerOrder = 100;
-			layerConfig.type = ELayerType.OddLayer;
-
-			Layer layer = Instantiate(_layerTemplate, transform);
-			layer.Index = 100;
-			layer.Config = layerConfig;
-			layer.SetTileSize(TileSize);
-			layer.CreateTilesByLayer(_tileTemplate, zoomLevel);
-			layer.OrganizeTilesAsGrid();
-
-			Tile layerCenterTile = GetCenterTileOnLayer(layer, true);
-
-			float scale = 1;
-
-			layer.transform.localScale = new Vector3(scale, scale, 1);
-
-			Vector3 topLeftOtherTile = layerCenterTile.transform.position;
-			topLeftOtherTile.x -= Consts.TILE_SIZE_IN_UNITS * scale;
-			topLeftOtherTile.y += Consts.TILE_SIZE_IN_UNITS * scale;
-
-			int multi = (zoomLevel - Consts.MIN_ZOOM_LEVEL) * 2;
-
-			layerCenterTile.TileData = new TileData(layerCenterTile.TileData.index, zoomLevel, 1 * multi, 2 * multi);
-
-			int x = 0, y = 0;
-
-			foreach (Tile tile in layer.Tiles)
-			{
-				x = (int)((tile.transform.localPosition.x - layerCenterTile.transform.localPosition.x) / Consts.TILE_SIZE_IN_UNITS);
-				y = (int)((tile.transform.localPosition.y - layerCenterTile.transform.localPosition.y) / Consts.TILE_SIZE_IN_UNITS) * -1;
-
-				tile.TileData = new TileData(tile.TileData.index, zoomLevel, layerCenterTile.X + x, layerCenterTile.Y + y);
-
-				DoTileDownloadForLayer(layer, tile.TileData);
-			}
-
-			layer.transform.localScale = Vector3.one;
 		}
 
 		private void RunZoomInTransactionTimeLogic()
 		{
-			if (_onZoomTransition == true)
+			if (_onZoomTransition == true && _zoomTransitionTimer > 0)
 			{
-				if (_zoomTransitionTimer > 0)
-				{
-					_zoomTransitionTimer -= Time.deltaTime;
+				_zoomTransitionTimer -= Time.deltaTime;
 
-					if (_zoomTransitionTimer <= 0)
-					{
-						_zoomTransitionTimer = 0;
-						_onZoomTransition = false;
-						_onCompleteZoomInTransition?.Invoke();
-					}
+				if (_zoomTransitionTimer <= 0)
+				{
+					_zoomTransitionTimer = 0;
+					_onZoomTransition = false;
+					_onCompleteZoomInTransition?.Invoke();
 				}
 			}
 		}
@@ -215,7 +163,7 @@ namespace OSM
 		private void InitializeMap()
 		{
 			//Tile size base should be multiplied because it will be used to organize the tiles side by side and it considers the tile bounds to do so
-			CalculateTileSize();
+			TileSize = Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor;
 		}
 
 		private void InitializeLayers()
@@ -246,40 +194,9 @@ namespace OSM
 			}
 		}
 
-		private void CalculateTileSize()
-		{
-			TileSize = Consts.TILE_SIZE_IN_UNITS * _zoomMultiplicationFactor;
-		}
-
 		private Tile GetCenterTileOnCurrentLayer(bool pUseExactCenter)
 		{
-			Tile centerTile = null;
-
-			foreach (Tile tile in CurrentLayer.Tiles)
-			{
-				if (CheckTileOnScreen(tile.transform.position))
-				{
-					if (pUseExactCenter == true)
-					{
-						if (tile.transform.position.x - Consts.TILE_HALF_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_HALF_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + Consts.TILE_HALF_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_HALF_SIZE_IN_UNITS <= 0)
-						{
-							return tile;
-						}
-					}
-					else
-					{
-						if (tile.X % 2 == 0 && tile.Y % 2 == 0 &&
-							tile.transform.position.x - Consts.TILE_SIZE_IN_UNITS <= 0 && tile.transform.position.x + Consts.TILE_SIZE_IN_UNITS >= 0 &&
-							tile.transform.position.y + Consts.TILE_SIZE_IN_UNITS >= 0 && tile.transform.position.y - Consts.TILE_SIZE_IN_UNITS <= 0)
-						{
-							return tile;
-						}
-					}
-				}
-			}
-
-			return centerTile;
+			return GetCenterTileOnLayer(CurrentLayer, pUseExactCenter);
 		}
 
 		private Tile GetCenterTileOnOtherLayer(bool pUseExactCenter)
@@ -318,36 +235,22 @@ namespace OSM
 			return centerTile;
 		}
 
-		//TODO: REVIEW
 		private Tile GetCenterTileOnCurrentLayerByPinch()
 		{
-			float distance = -1;
-			Tile centerTile = null;
-
-			foreach (Tile tile in CurrentLayer.Tiles)
-			{
-				if(distance == -1)
-				{
-					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
-					centerTile = tile;
-				}
-				if(Vector3.Distance(tile.transform.position, Vector3.zero) < distance)
-				{
-					distance = Vector3.Distance(tile.transform.position, Vector3.zero);
-					centerTile = tile;
-				}
-			}
-
-			return centerTile;
+			return GetCenterTileOnLayerByPinch(CurrentLayer);
 		}
 
-		//TODO: REVIEW
 		private Tile GetCenterTileOnOtherLayerByPinch()
+		{
+			return GetCenterTileOnLayerByPinch(OtherLayer);
+		}
+
+		private Tile GetCenterTileOnLayerByPinch(Layer pLayer)
 		{
 			float distance = -1;
 			Tile centerTile = null;
 
-			foreach (Tile tile in OtherLayer.Tiles)
+			foreach (Tile tile in pLayer.Tiles)
 			{
 				if (distance == -1)
 				{
@@ -514,7 +417,6 @@ namespace OSM
 			});
 		}
 
-		#region TEMP
 		public void ExecuteZoomingWithPinch(ZoomLevel pZoomLevel)
 		{
 			float pScaleFraction = LayerContainer.localScale.x;
@@ -537,11 +439,6 @@ namespace OSM
 			}
 		}
 
-		private void DoZoomNewWay(int pZoomLevel = 3, int pZoomScale = 1, float pObjectScale = 1)
-		{
-
-		}
-
 		private void DoZoomWithPinch(int pZoomLevel = 3, int pZoomScale = 1, float pObjectScale = 1)
 		{
 			ZoomFraction zoomFraction = ZoomSystem.GetZoomScaleByObjectScale(CurrentLayer.transform.localScale.x);
@@ -556,8 +453,9 @@ namespace OSM
 				_currentZoomLevel = zoomFraction.zoomLevel;
 			}
 
-			OtherLayer.FadeOut(0);
+			OtherLayer.FadeOut();
 
+			ResetOtherLayerScale();
 			ResetLayerContainerScale();
 			ResetOtherLayerPosition();
 			ResetLayerContainerPosition();
@@ -568,28 +466,29 @@ namespace OSM
 
 			OtherLayer.OrganizeTilesAsGrid();
 
-			if (tempDoFullZoomCycle == true)
+			if (tempDoFullZoomCycle == true)//Delete tempDoFullZoomCycle later
 			{
 				SwapLayers();
 
 				CurrentLayer.RecalculateMapScaling( OtherLayer.transform.localScale.x / zoomFraction.zoomScale );
 				OtherLayer.MapScaleFraction = 1;
 
-				ReferenceTilesBetweenLayersOnZoomInByPinch(zoomFraction);
-
-				transform.position = _mapDeviationCorrection;
-	
-				CalculateScreenBoundaries();
-		
-				PrepareZoomInTransition(() =>
+				ReferenceTilesBetweenLayersOnZoomInByPinch(zoomFraction, () => 
 				{
-					MoveOtherLayerToMap();
-					ResetOtherLayerScale();
-					CheckCurrentLayerWithinScreenLimits(false);
+					transform.position = _mapDeviationCorrection;
+
+					CalculateScreenBoundaries();
+
+					PrepareZoomInTransition(() =>
+					{
+						MoveOtherLayerToMap();
+						//ResetOtherLayerScale();
+						//CheckCurrentLayerWithinScreenLimits(false);
+						CalculateTilesPositionAndUpdate();
+					});
 				});
 			}
 		}
-		#endregion
 
 		private void PrepareZoomInTransition(Action pOnComplete)
 		{
@@ -631,7 +530,7 @@ namespace OSM
 			_isStopped = false;
 		}
 
-		public void StopMovements()
+		public void ForceStopMovements()
 		{
 			_isMovingLeft = false;
 			_isMovingRight = false;
@@ -670,7 +569,10 @@ namespace OSM
 
 			tile.TileData = new TileData(tile.TileData.index, _currentZoomLevel, _nextX, _nextY);
 
-			DoTileDownload(tile.TileData);
+			if (tile.TextureUpToDate == false)
+			{
+				DoTileDownload(tile.TileData);
+			}
 		}
 
 		private void DoTileDownload(TileData pTileData, float delay = 0)
@@ -751,7 +653,7 @@ namespace OSM
 		}
 
 		//TODO: Review later and remove the other one once this one is working properly
-		private void ReferenceTilesBetweenLayersOnZoomInByPinch(ZoomFraction pZoomFraction)
+		private void ReferenceTilesBetweenLayersOnZoomInByPinch(ZoomFraction pZoomFraction, Action pOnCompelte = null)
 		{
 			if (_debugUseTileColorGuide)
 			{
@@ -805,7 +707,9 @@ namespace OSM
 			{
 				_otherLayerMainTile._meshRenderer.material.color = new Color(0.9f, 0.9f, 0.9f, 1);
 				_currentLayerMainTile._meshRenderer.material.color = new Color(0.89f, 0.69f, 0.62f, 1);//227,177,157
-			}						
+			}
+
+			pOnCompelte?.Invoke();
 		}
 
 		private void ReferenceTilesBetweenLayersOnZoomIn(float pScale)
@@ -940,6 +844,14 @@ namespace OSM
 			if (_isStopped == false && pConsiderMovement == true)
 			{
 			 	MarkerManager.Instance.UpdateMarkers(_currentZoomLevel);
+			}
+		}
+
+		public void CalculateTilesPositionAndUpdate()
+		{
+			foreach (Tile tile in CurrentLayer.Tiles)
+			{
+				PrepareTileDataBeforeDownload(tile);
 			}
 		}
 

@@ -64,7 +64,7 @@ namespace OSM
 		{
 			get
 			{
-				return _tileData.name.Equals(_meshRenderer.name) && _tileData.name.Equals(_meshRenderer.material.name);
+				return _tileData.name.Equals(_meshRenderer.name) && _tileData.name.Equals(_meshRenderer.material.name) && _tileData.name.Equals(Zoom + "/" + X + "/" + Y + ".png");
 			}
 		}
 

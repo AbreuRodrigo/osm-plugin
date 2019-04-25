@@ -78,7 +78,7 @@ namespace OSM
 				if (_map.transform.position.x == _previousMapPosition.x &&
 					_map.transform.position.y == _previousMapPosition.y)
 				{
-					_map.StopMovements();
+					_map.ForceStopMovements();
 				}
 				else
 				{
