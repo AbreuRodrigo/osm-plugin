@@ -290,11 +290,11 @@ namespace OSM
 		 */
 		private void ExecuteZoomProcedures()
 		{
-			int zoomDiff = (int)_map.CurrentZoomLevel + _zoomGapOnPinch;
+			int zoomDiff = (int) _map.CurrentZoomLevel + _zoomGapOnPinch;
 
 			if (zoomDiff > Consts.MAX_ZOOM_LEVEL)
 			{
-				_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int)_map.CurrentZoomLevel;
+				_zoomGapOnPinch = Consts.MAX_ZOOM_LEVEL - (int) _map.CurrentZoomLevel;
 			}
 
 			_zoomLevel = new ZoomLevel(_zoomGapOnPinch);		
@@ -309,7 +309,7 @@ namespace OSM
 			}
 			else if (_isZooming == true)
 			{				
-				_layerContainerScale = ZoomSystem.GetSumByScale((int)Mathf.Round(_map.LayerContainer.localScale.x));
+				_layerContainerScale = ZoomSystem.GetSumByScale( (int) Mathf.Round(_map.LayerContainer.localScale.x) );
 				_zoomLevel.ResetLevel(_layerContainerScale);
 				UpdateZoomProcess();
 
@@ -319,7 +319,7 @@ namespace OSM
 						
 		private void ProcessMapZoom()
 		{
-#if UNITY_EDITOR
+/*#if UNITY_EDITOR
 			if (userPinchSimulatorForZoom == true)
 			{
 				if (Input.GetKeyDown(KeyCode.LeftControl))
@@ -345,7 +345,7 @@ namespace OSM
 				DoZoomWithButtonsLogic();
 			}
 #endif
-#if !UNITY_EDITOR && UNITY_ANDROID
+#if UNITY_EDITOR && (UNITY_ANDROID || UNITY_IOS)*/
 
 			if(Input.touchCount > 0)
 			{
@@ -380,6 +380,8 @@ namespace OSM
 					{
 						StartLayerContainerScalingMobile(p1, p2);
 					}
+
+					ExecuteZoomProcedures();
 				}
 
 				if(_isZooming == true)
@@ -387,9 +389,7 @@ namespace OSM
 					DebugManager.Instance.UpdateDebugTouchesMobile(p1, p2);
 				}
 			}
-#endif
-
-			ExecuteZoomProcedures();
+//#endif			
 		}
 
 		#endregion
@@ -433,16 +433,29 @@ namespace OSM
 		}
 
 		private void UpdateZoomProcess()
-		{
-			float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;
-			_zoomPercent = distance / _map.mapHorizontalLimitInUnits;
-
-			if (_zoomPercent > 1.0f)
+		{			
+			if (DebugManager.Instance.GetDisanceBetweenTouches() > _initialPinchDistance + 0.1f)
 			{
-				_zoomPercent = 1.0f;
-			}
+				float distance = DebugManager.Instance.GetDisanceBetweenTouches() - _initialPinchDistance;
+				_zoomPercent = distance / _map.mapHorizontalLimitInUnits;
 
-			_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+				if (_zoomPercent > 1.0f)
+				{
+					_zoomPercent = 1.0f;
+				}
+
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, _targetScale, _zoomPercent);
+			}
+			else if(DebugManager.Instance.GetDisanceBetweenTouches() < _initialPinchDistance - 0.1f)
+			{
+				_zoomPercent = DebugManager.Instance.GetDisanceBetweenTouches() / _initialPinchDistance;
+
+				Vector3 p = _initialScale;
+				p.x *= 0.5f;
+				p.y *= 0.5f;
+
+				_map.LayerContainer.localScale = Vector3.Lerp(_initialScale, p, _zoomPercent);
+			}
 		}
 
 		public void StartLayerContainerScalingEditor(Vector3 pInitPosition)
