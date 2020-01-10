@@ -940,7 +940,6 @@ namespace OSM
 			}
 		}
 
-
 		public void MoveCurrentLayerToContainer()
 		{
 			if(CurrentLayer != null && _layerContainer != null)
@@ -971,34 +970,6 @@ namespace OSM
 			{
 				OtherLayer.transform.SetParent(transform);
 			}
-		}
-
-		private void ReplicateOtherLayer()
-		{
-			if (LayerReplica != null)
-			{
-				Destroy(LayerReplica.gameObject);
-			}
-
-			LayerReplica = Instantiate(OtherLayer.gameObject, transform).GetComponent<Layer>();
-			LayerReplica.ChangeToMiddleLayer();
-
-			CurrentLayer.ChangeToFrontLayer();
-			OtherLayer.ChangeToBackLayer();
-		}
-
-		private void ReplicateCurrentLayer()
-		{
-			if (LayerReplica != null)
-			{
-				Destroy(LayerReplica.gameObject);
-			}
-
-			LayerReplica = Instantiate(CurrentLayer.gameObject, transform).GetComponent<Layer>();
-			LayerReplica.ChangeToMiddleLayer();
-
-			CurrentLayer.ChangeToFrontLayer();
-			OtherLayer.ChangeToBackLayer();
 		}
 	}
 }
